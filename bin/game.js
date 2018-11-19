@@ -150,6 +150,7 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             this.justAdded = true;
         }
         Tile.prototype.moveTo = function (row, column) {
+            //EventManager.emit("moveTile", {id:this.id, oldX: this.row, oldY: this.column, newX: row, newY: column } )
             this.oldRow = this.row;
             this.oldColumn = this.column;
             this.row = row;
@@ -173,15 +174,6 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
         };
         Tile.prototype.toColumn = function () {
             return this.mergedInto ? this.mergedInto.column : this.column;
-        };
-        Tile.prototype.makeBig = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    //await sleep(100)
-                    this.justAdded = false;
-                    return [2 /*return*/];
-                });
-            });
         };
         Tile = __decorate([
             Component('tile'),
@@ -227,7 +219,6 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
                         tile2.column = tile1.column;
                         exports.mergeTiles(tile2, targetTile);
                         targetTile.value += tile2.value;
-                        targetTile.makeBig();
                     }
                     resultRow[target] = targetTile;
                     if (targetTile.value == 2048) {
@@ -243,6 +234,9 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
         Board.prototype.setPositions = function () {
             this.cells.forEach(function (row, rowIndex) {
                 row.forEach(function (tile, columnIndex) {
+                    if (tile.row != tile.oldRow || tile.column != tile.oldColumn) {
+                        EventManager_1.EventManager.emit("moveTile", { id: tile.id, oldX: tile.oldRow, oldY: tile.oldColumn, newX: tile.row, newY: tile.column });
+                    }
                     tile.oldRow = tile.row;
                     tile.oldColumn = tile.column;
                     tile.row = rowIndex;
@@ -265,7 +259,6 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             var newValue = Math.random() < this.fourProbability ? 4 : 2;
             //console.log("new cell added, " + cell.r + " & " + cell.c)
             this.cells[cell.r][cell.c] = this.addTile(newValue, cell.r, cell.c);
-            this.cells[cell.r][cell.c].makeBig();
             EventManager_1.EventManager.emit("newTile", { id: TileId, val: newValue, x: cell.r, y: cell.c });
         };
         Board.prototype.move = function (direction) {
@@ -400,10 +393,9 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
                     var data = gem.get(TileData);
                     var transform = gem.get(Transform);
                     if (data.lerp < 1) {
-                        data.lerp += 0.01;
+                        data.lerp += dt * 2;
                         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp);
                         transform.position = gridToScene(data.pos.x, data.pos.y);
-                        log(transform.position);
                     }
                 }
             }
@@ -431,9 +423,9 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
                     var data = gem.get(TileData);
                     var transform = gem.get(Transform);
                     if (data.sizeLerp < 1) {
-                        data.sizeLerp += 0.05;
+                        data.sizeLerp += dt;
                         transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp));
-                        log(transform.position);
+                        //log(transform.position)
                     }
                 }
             }
@@ -491,11 +483,8 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
             var ent = spawner.getEntityFromPool();
             if (!ent)
                 return;
-            if (!ent.getOrNull(GLTFShape)) {
-                var modelPath = "models/" + model + ".gltf";
-                var shape = new GLTFShape(modelPath);
-                ent.set(shape);
-            }
+            var shapeIndex = values.indexOf(model);
+            ent.set(gemModels[shapeIndex]);
             if (!ent.getOrNull(Transform)) {
                 var t = new Transform();
                 ent.set(t);
@@ -512,6 +501,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
                 p.id = id;
                 p.val = model;
                 p.pos = new Vector2(x, y);
+                p.lerp = 1;
                 p.sizeLerp = 0;
             }
             else {
@@ -519,6 +509,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
                 p.id = id;
                 p.val = model;
                 p.pos = new Vector2(x, y);
+                p.lerp = 1;
                 p.sizeLerp = 0;
             }
             engine.addEntity(ent);
@@ -597,18 +588,24 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
     // Swipe detector singleton
     var swipeChecker = new Entity();
     swipeChecker.set(new SwipeDetection);
+    // 3D models for gems
+    var gemModels = [];
+    var gemVal = 2;
+    for (var i = 0; i < values.length; i++) {
+        var gemMod = new GLTFShape("models/" + gemVal + ".gltf");
+        gemModels.push(gemMod);
+        gemVal *= 2;
+    }
     ///////////////////////////////
     // Event based functions
     // Swipe detection
     input.subscribe("BUTTON_A_DOWN", function (e) {
-        //log("pointerUp", e)
         var swipes = swipeChecker.get(SwipeDetection);
         swipes.buttonPressed = true;
         swipes.posOnDown = camera.rotation.eulerAngles;
     });
     // button up event
     input.subscribe("BUTTON_A_UP", function (e) {
-        //log("pointerDown", e)
         var swipes = swipeChecker.get(SwipeDetection);
         swipes.buttonPressed = false;
         swipes.posOnUp = camera.rotation.eulerAngles;
@@ -627,7 +624,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
         else if (deltaY < -5 && Math.abs(deltaX) < 3) {
             direction = 3;
         }
-        log(direction);
+        log("direction " + direction);
         shiftBlocks(direction);
     });
     EventManager_2.EventManager.on("newTile", function (e) {
@@ -637,6 +634,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
         var x = Math.floor(Math.random() * 4) + 1;
         var y = Math.floor(Math.random() * 4) + 1;
         spawner.spawnGem(id, val, x, y);
+        // sound
     });
     EventManager_2.EventManager.on("moveTile", function (e) {
         var newX = Math.floor(Math.random() * 4) + 1;
@@ -644,28 +642,23 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
         var oldX = Math.floor(Math.random() * 4) + 1;
         var oldY = Math.floor(Math.random() * 4) + 1;
         var tileId = Math.floor(Math.random() * 10) + 1;
-        var tile = gems.entities.filter(function (gem) {
-            return gem.getOrNull(TileData).id == tileId;
-        })[0];
+        var tileIndex = Math.floor(Math.random() * gems.entities.length);
+        var tile = gems.entities[tileIndex];
         var tileData = tile.getOrNull(TileData);
         tileData.oldPos = new Vector2(oldX, oldY);
         tileData.nextPos = new Vector2(newX, newY);
         tileData.lerp = 0;
     });
-    // EventManager.on("deleteTile", e => {
-    // })
     EventManager_2.EventManager.on("merge", function (e) {
-        var old = Math.floor(Math.random() * 10) + 1;
-        var target = Math.floor(Math.random() * 10) + 1;
-        var oldGem = gems.entities.filter(function (gem) {
-            return gem.getOrNull(TileData).id == old;
-        })[0];
-        var targetGem = gems.entities.filter(function (gem) {
-            return gem.getOrNull(TileData).id == target;
-        })[0];
+        var old = Math.floor(Math.random() * gems.entities.length);
+        var target = Math.floor(Math.random() * gems.entities.length);
+        var oldGem = gems.entities[old];
+        var targetGem = gems.entities[target];
         engine.removeEntity(oldGem);
-        var newModel = targetGem.getOrNull(TileData).val * 2;
-        targetGem.set(new GLTFShape("models/" + newModel + ".gltf"));
+        var newModelVal = targetGem.getOrNull(TileData).val * 2;
+        var shapeIndex = values.indexOf(newModelVal);
+        targetGem.set(gemModels[shapeIndex]);
+        // sound
     });
     EventManager_2.EventManager.on("win", function (e) {
         log("WIN!!");

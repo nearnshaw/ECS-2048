@@ -33,7 +33,7 @@ export class SwipeDetection {
 export class TileData {
   id:number
   val: number
-  pos: Vector2
+  pos: Vector2    //maybe not needed
   nextPos: Vector2
   oldPos: Vector2
   lerp: number = 1
@@ -82,10 +82,9 @@ export class MoveTiles implements ISystem {
       let data = gem.get(TileData)
       let transform = gem.get(Transform)
       if (data.lerp < 1){
-        data.lerp += 0.01
+        data.lerp += dt * 2
         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp)
         transform.position = gridToScene(data.pos.x, data.pos.y)
-        log(transform.position)
       }
     }
   }
@@ -101,9 +100,9 @@ export class GrowTiles implements ISystem {
       let data = gem.get(TileData)
       let transform = gem.get(Transform)
       if (data.sizeLerp < 1){
-        data.sizeLerp += 0.05
+        data.sizeLerp += dt
         transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp))
-        log(transform.position)
+        //log(transform.position)
       }
     }
   }
@@ -164,12 +163,8 @@ const spawner = {
 
     if (!ent) return
 
-
-    if (!ent.getOrNull(GLTFShape)) {
-      const modelPath = "models/" + model + ".gltf"
-      const shape = new GLTFShape(modelPath)
-      ent.set(shape)
-    }
+    let shapeIndex = values.indexOf(model)
+    ent.set(gemModels[shapeIndex])
 
 
     if (!ent.getOrNull(Transform)) {
@@ -188,12 +183,14 @@ const spawner = {
       p.id = id
       p.val = model
       p.pos = new Vector2(x, y)
+      p.lerp = 1
       p.sizeLerp = 0
     } else {
       const p = ent.get(TileData)
       p.id = id
       p.val = model
       p.pos = new Vector2(x, y)
+      p.lerp = 1
       p.sizeLerp = 0
     }
 
@@ -301,6 +298,20 @@ engine.addEntity(map)
 let swipeChecker = new Entity()
 swipeChecker.set(new SwipeDetection)
 
+
+// 3D models for gems
+
+let gemModels = []
+
+let gemVal = 2
+for (let i = 0 ; i < values.length; i++){
+  let gemMod = new GLTFShape("models/" + gemVal + ".gltf")
+  gemModels.push(gemMod)
+  gemVal *= 2
+}
+
+
+
 ///////////////////////////////
 // Event based functions
 
@@ -309,15 +320,14 @@ swipeChecker.set(new SwipeDetection)
 // Swipe detection
 
 input.subscribe("BUTTON_A_DOWN", e => {
-  //log("pointerUp", e)
+  
   let swipes = swipeChecker.get(SwipeDetection)
   swipes.buttonPressed = true
   swipes.posOnDown = camera.rotation.eulerAngles
 })
 
 // button up event
-input.subscribe("BUTTON_A_UP", e => {
-  //log("pointerDown", e)
+input.subscribe("BUTTON_A_UP", e => { 
   let swipes = swipeChecker.get(SwipeDetection)
   swipes.buttonPressed = false
   swipes.posOnUp = camera.rotation.eulerAngles
@@ -333,7 +343,7 @@ input.subscribe("BUTTON_A_UP", e => {
   } else if (deltaY < -5 && Math.abs(deltaX) < 3){
     direction = 3
   }
-  log(direction)
+  log("direction " + direction)
   shiftBlocks(direction)
 })
 
@@ -345,6 +355,8 @@ EventManager.on("newTile", e => {
   let x = Math.floor(Math.random() * 4) + 1
   let y = Math.floor(Math.random() * 4) + 1
   spawner.spawnGem(id, val, x, y)
+
+  // sound
 })
 
 EventManager.on("moveTile", e => {
@@ -353,28 +365,26 @@ EventManager.on("moveTile", e => {
   let oldX = Math.floor(Math.random() * 4) + 1
   let oldY = Math.floor(Math.random() * 4) + 1
   let tileId = Math.floor(Math.random() * 10) + 1
-  let tile = gems.entities.filter( function(gem) { 
-    return gem.getOrNull(TileData).id == tileId})[0]
+  let tileIndex = Math.floor(Math.random() * gems.entities.length)
+  let tile = gems.entities[tileIndex]
   let tileData = tile.getOrNull(TileData)
   tileData.oldPos = new Vector2(oldX, oldY)
   tileData.nextPos = new Vector2(newX, newY)
   tileData.lerp = 0
 })
 
-// EventManager.on("deleteTile", e => {
-  
-// })
 
 EventManager.on("merge", e => {
-  let old = Math.floor(Math.random() * 10) + 1
-  let target = Math.floor(Math.random() * 10) + 1
-  let oldGem = gems.entities.filter( function(gem) { 
-    return gem.getOrNull(TileData).id == old})[0]
-  let targetGem = gems.entities.filter( function(gem) { 
-    return gem.getOrNull(TileData).id == target})[0]
+  let old = Math.floor(Math.random() * gems.entities.length)
+  let target = Math.floor(Math.random() * gems.entities.length)
+  let oldGem = gems.entities[old]
+  let targetGem = gems.entities[target]
   engine.removeEntity(oldGem)
-  let newModel = targetGem.getOrNull(TileData).val * 2
-  targetGem.set(new GLTFShape("models/" + newModel + ".gltf"))
+  let newModelVal = targetGem.getOrNull(TileData).val * 2
+  let shapeIndex = values.indexOf(newModelVal)
+  targetGem.set(gemModels[shapeIndex])
+
+  // sound
 })
 
 
@@ -385,3 +395,6 @@ EventManager.on("win", e => {
 EventManager.on("loose", e => {
   log("LOOSE!!")
  })
+
+
+ 

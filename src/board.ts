@@ -60,7 +60,9 @@ export class Tile {
     this.id = TileId++;
     this.justAdded = true;
   }
-  moveTo(row, column) {
+  moveTo(row, column) {    // FUNCTION NEVER CALLED
+    //EventManager.emit("moveTile", {id:this.id, oldX: this.row, oldY: this.column, newX: row, newY: column } )
+
     this.oldRow = this.row;
     this.oldColumn = this.column;
     this.row = row;
@@ -84,10 +86,6 @@ export class Tile {
   }
   toColumn() {
     return this.mergedInto ? this.mergedInto.column : this.column;
-  }
-  async makeBig(){
-    //await sleep(100)
-    this.justAdded = false
   }
 }
 
@@ -146,7 +144,6 @@ export class Board {
           tile2.column = tile1.column
           mergeTiles(tile2, targetTile)
           targetTile.value += tile2.value;
-          targetTile.makeBig()
         }
         resultRow[target] = targetTile;
         if (targetTile.value == 2048) {
@@ -163,6 +160,9 @@ export class Board {
   setPositions() {
     this.cells.forEach((row, rowIndex) => {
       row.forEach((tile, columnIndex) => {
+        if (tile.row != tile.oldRow || tile.column != tile.oldColumn){
+          EventManager.emit("moveTile", {id:tile.id, oldX: tile.oldRow, oldY: tile.oldColumn, newX: tile.row, newY: tile.column } )
+        }
         tile.oldRow = tile.row;
         tile.oldColumn = tile.column;
         tile.row = rowIndex;
@@ -185,7 +185,6 @@ export class Board {
     var newValue = Math.random() < this.fourProbability ? 4 : 2;
     //console.log("new cell added, " + cell.r + " & " + cell.c)
     this.cells[cell.r][cell.c] = this.addTile(newValue, cell.r, cell.c);
-    this.cells[cell.r][cell.c].makeBig()
     EventManager.emit("newTile", { id: TileId, val:newValue, x: cell.r, y: cell.c})
   }
   move(direction) {

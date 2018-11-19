@@ -6,6 +6,9 @@ const input = Input.instance
 
 const camera = Camera.instance
 
+const values = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+
+
 // CUSTOM COMPONENTS
 
 @Component('openLerp')
@@ -26,30 +29,32 @@ export class SwipeDetection {
   minDistance: number = 5
 }
 
-@Component('posOnBoard')
-export class PosOnBoard {
+@Component('tileData')
+export class TileData {
   id:number
-  x: number
-  y: number
+  val: number
+  pos: Vector2
+  nextPos: Vector2
+  oldPos: Vector2
+  lerp: number = 1
+  size: number
+  sizeLerp: number = 0
 }
 
 
-// @Component('sizeLerp')
-// export class SizeLerp {
-//   closedScale: number = 0.05
-//   openScale: number = 0.45
-//   fraction: number = 0
 
-//   constructor(closedScale: number = 0, openScale: number = 1, fraction: number = 0){
-//     this.closedScale = closedScale
-//     this.openScale = openScale
-//     this.fraction = fraction
-//   }
-// }
+
+///////////////////////////
+// Entity groups
+
+const gems = engine.getComponentGroup(Transform, TileData)
+
+
 
 ///////////////////////////
 // Systems
 
+// Open Chest
 export class OpenBoard implements ISystem {
   update(dt: number) {
       let transform = boardWrapper.get(Transform)
@@ -67,8 +72,27 @@ export class OpenBoard implements ISystem {
   }
 }
 
+
 engine.addSystem(new OpenBoard)
 
+// Move tiles
+
+export class MoveTiles implements ISystem {
+  update(dt: number) {
+    for (let gem of gems.entities) {
+      let data = gem.get(TileData)
+      let transform = gem.get(Transform)
+      if (data.lerp < 1){
+        data.lerp += 0.01
+        data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp)
+        transform.position = gridToScene(data.pos.x, data.pos.y)
+        log(transform.position)
+      }
+    }
+  }
+}
+
+engine.addSystem(new MoveTiles)
 
 //////////////////////////////
 // OTHER FUNCTIONS
@@ -110,7 +134,7 @@ const spawner = {
 
     if (spawner.pool.length < spawner.MAX_POOL_SIZE) {
       const instance = new Entity()
-      instance.parent = map
+      instance.setParent(map)
       spawner.pool.push(instance)
       return instance
     }
@@ -118,7 +142,7 @@ const spawner = {
     return null
   },
 
-  spawnGem(id: number, model: string, x: number, y: number) {
+  spawnGem(id: number, model: number, x: number, y: number) {
     const ent = spawner.getEntityFromPool()
 
     if (!ent) return
@@ -141,17 +165,17 @@ const spawner = {
       t.position = gridToScene(x, y)
     }
 
-    if (!ent.getOrNull(PosOnBoard)) {
-      const p = new PosOnBoard()
+    if (!ent.getOrNull(TileData)) {
+      const p = new TileData()
       ent.set(p)
       p.id = id
-      p.x = x
-      p.y = y
+      p.val = model
+      p.pos = new Vector2(x, y)
     } else {
-      const p = ent.get(PosOnBoard)
+      const p = ent.get(TileData)
       p.id = id
-      p.x = x
-      p.y = y
+      p.val = model
+      p.pos = new Vector2(x, y)
     }
 
 
@@ -225,7 +249,7 @@ engine.addEntity(chest)
 // Chest Light
 const chestLight = new Entity()
 chestLight.set(new Transform())
-chestLight.parent = chest
+chestLight.setParent(chest)
 chestLight.set(new GLTFShape("models/Light.gltf"))
 const chestLightOpen = new AnimationClip("Light_Open",{loop:false})
 const chestLightClose = new AnimationClip("Light_Close",{loop:false})
@@ -245,7 +269,7 @@ engine.addEntity(boardWrapper)
 
 // Map
 const map = new Entity()
-map.parent = boardWrapper
+map.setParent(boardWrapper)
 map.set(new Transform())
 map.get(Transform).position.set(0, 1, 0)
 map.get(Transform).scale.setAll(2)
@@ -296,23 +320,42 @@ input.subscribe("BUTTON_A_UP", e => {
 
 
 EventManager.on("newTile", e => {
-  let id = 1
-  let val = "2"
+  let id = Math.floor(Math.random() * 10) + 1
+  let index = Math.floor(Math.random() * values.length)
+  let val = values[index]
   let x = Math.floor(Math.random() * 4) + 1
   let y = Math.floor(Math.random() * 4) + 1
   spawner.spawnGem(id, val, x, y)
 })
 
 EventManager.on("moveTile", e => {
-  
+  let newX = Math.floor(Math.random() * 4) + 1
+  let newY = Math.floor(Math.random() * 4) + 1
+  let oldX = Math.floor(Math.random() * 4) + 1
+  let oldY = Math.floor(Math.random() * 4) + 1
+  let tileId = Math.floor(Math.random() * 10) + 1
+  let tile = gems.entities.filter( function(gem) { 
+    return gem.getOrNull(TileData).id == tileId})[0]
+  let tileData = tile.getOrNull(TileData)
+  tileData.oldPos = new Vector2(oldX, oldY)
+  tileData.nextPos = new Vector2(newX, newY)
+  tileData.lerp = 0
 })
 
-EventManager.on("deleteTile", e => {
+// EventManager.on("deleteTile", e => {
   
-})
+// })
 
-EventManager.on("upgradeTile", e => {
-  
+EventManager.on("merge", e => {
+  let old = Math.floor(Math.random() * 10) + 1
+  let target = Math.floor(Math.random() * 10) + 1
+  let oldGem = gems.entities.filter( function(gem) { 
+    return gem.getOrNull(TileData).id == old})[0]
+  let targetGem = gems.entities.filter( function(gem) { 
+    return gem.getOrNull(TileData).id == target})[0]
+  engine.removeEntity(oldGem)
+  let newModel = targetGem.getOrNull(TileData).val * 2
+  targetGem.set(new GLTFShape("models/" + newModel + ".gltf"))
 })
 
 

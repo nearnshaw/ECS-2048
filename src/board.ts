@@ -24,8 +24,9 @@ var rotateLeft = function (matrix) {
 
 export var mergeTiles = async function (old: Tile, target: Tile){
   //await sleep(250)
+  EventManager.emit("merge", {old: old.id, new: target.id})
   old.mergedInto = target;
-  EventManager.emit("merge")
+  
 }
 
 // export function sleep(ms: number = 0) {

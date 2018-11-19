@@ -37,7 +37,6 @@ export class TileData {
   nextPos: Vector2
   oldPos: Vector2
   lerp: number = 1
-  size: number
   sizeLerp: number = 0
 }
 
@@ -93,6 +92,24 @@ export class MoveTiles implements ISystem {
 }
 
 engine.addSystem(new MoveTiles)
+
+// Grow tiles
+
+export class GrowTiles implements ISystem {
+  update(dt: number) {
+    for (let gem of gems.entities) {
+      let data = gem.get(TileData)
+      let transform = gem.get(Transform)
+      if (data.sizeLerp < 1){
+        data.sizeLerp += 0.05
+        transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp))
+        log(transform.position)
+      }
+    }
+  }
+}
+
+engine.addSystem(new GrowTiles)
 
 //////////////////////////////
 // OTHER FUNCTIONS
@@ -171,11 +188,13 @@ const spawner = {
       p.id = id
       p.val = model
       p.pos = new Vector2(x, y)
+      p.sizeLerp = 0
     } else {
       const p = ent.get(TileData)
       p.id = id
       p.val = model
       p.pos = new Vector2(x, y)
+      p.sizeLerp = 0
     }
 
 

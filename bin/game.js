@@ -419,6 +419,36 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
     }());
     exports.MoveTiles = MoveTiles;
     engine.addSystem(new MoveTiles);
+    // Grow tiles
+    var GrowTiles = /** @class */ (function () {
+        function GrowTiles() {
+        }
+        GrowTiles.prototype.update = function (dt) {
+            var e_2, _a;
+            try {
+                for (var _b = __values(gems.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var gem = _c.value;
+                    var data = gem.get(TileData);
+                    var transform = gem.get(Transform);
+                    if (data.sizeLerp < 1) {
+                        data.sizeLerp += 0.05;
+                        transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp));
+                        log(transform.position);
+                    }
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+        };
+        return GrowTiles;
+    }());
+    exports.GrowTiles = GrowTiles;
+    engine.addSystem(new GrowTiles);
     //////////////////////////////
     // OTHER FUNCTIONS
     function openChest() {
@@ -482,12 +512,14 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
                 p.id = id;
                 p.val = model;
                 p.pos = new Vector2(x, y);
+                p.sizeLerp = 0;
             }
             else {
                 var p = ent.get(TileData);
                 p.id = id;
                 p.val = model;
                 p.pos = new Vector2(x, y);
+                p.sizeLerp = 0;
             }
             engine.addEntity(ent);
         }

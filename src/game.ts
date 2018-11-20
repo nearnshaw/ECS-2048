@@ -202,8 +202,8 @@ const spawner = {
 
 function gridToScene(row: number, col: number){
   let convertedPos = new Vector3(
-    (row ) - 2.5 ,
-    (col ) - 2.5,
+    (row + 1  ) - 2.5 ,
+    (col + 1 ) - 2.5,
     0
   )
   return convertedPos
@@ -361,6 +361,7 @@ input.subscribe("BUTTON_A_UP", e => {
 EventManager.on("newTile", e => {
   //debugger
   spawner.spawnGem(e.id, e.val, e.x , e.y )
+  log("new tile X:" + e.x + " Y: " + e.y)
   // sound
 })
 
@@ -378,16 +379,16 @@ EventManager.on("moveTile", e => {
 
 EventManager.on("merge", e => {
   let oldGem = gems.entities.filter(function (gem) {
-    return gem.getOrNull(TileData).id == e.old;
+    return gem.getOrNull(TileData).id == e.oldId;
 })[0];
   let targetGem = gems.entities.filter(function (gem) {
-  return gem.getOrNull(TileData).id == e.target;
+  return gem.getOrNull(TileData).id == e.targetId;
 })[0];
   engine.removeEntity(oldGem)
-  let newModelVal = targetGem.getOrNull(TileData).val * 2
-  let shapeIndex = values.indexOf(newModelVal)
+  let targetModelVal = targetGem.getOrNull(TileData).val * 2
+  let shapeIndex = values.indexOf(targetModelVal)
   targetGem.set(gemModels[shapeIndex])
-  debugger
+  //debugger
   // sound
 })
 

@@ -24,7 +24,7 @@ var rotateLeft = function (matrix) {
 
 export var mergeTiles = async function (old: Tile, target: Tile){
   //await sleep(250)
-  EventManager.emit("merge", {old: old.id, new: target.id})
+  EventManager.emit("merge", {oldId: old.id, targetId: target.id})
   old.mergedInto = target;
   
 }
@@ -59,7 +59,7 @@ export class Tile {
     this.markForDeletion = false;
     this.id = TileId++;
     this.justAdded = true;
-    if (this.value != 0)
+    if (this.value != 0 && this.row > -1 && this.column > -1)
     { 
       EventManager.emit("newTile", { id: this.id, val:this.value, x: this.row, y: this.column})
     }
@@ -164,7 +164,7 @@ export class Board {
     this.cells.forEach((row, rowIndex) => {
       row.forEach((tile, columnIndex) => {
         if (tile.row != tile.oldRow || tile.column != tile.oldColumn){
-          EventManager.emit("moveTile", {id:tile.id, oldX: tile.oldRow, oldY: tile.oldColumn, newX: tile.row, newY: tile.column } )
+          EventManager.emit("moveTile", {id:tile.id, oldX: tile.row, oldY: tile.column, newX: rowIndex, newY: columnIndex } )
         }
         tile.oldRow = tile.row;
         tile.oldColumn = tile.column;

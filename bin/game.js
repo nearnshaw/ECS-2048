@@ -124,7 +124,7 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 //await sleep(250)
-                EventManager_1.EventManager.emit("merge", { old: old.id, new: target.id });
+                EventManager_1.EventManager.emit("merge", { oldId: old.id, targetId: target.id });
                 old.mergedInto = target;
                 return [2 /*return*/];
             });
@@ -144,7 +144,7 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             this.markForDeletion = false;
             this.id = TileId++;
             this.justAdded = true;
-            if (this.value != 0) {
+            if (this.value != 0 && this.row > -1 && this.column > -1) {
                 EventManager_1.EventManager.emit("newTile", { id: this.id, val: this.value, x: this.row, y: this.column });
             }
         }
@@ -233,7 +233,7 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             this.cells.forEach(function (row, rowIndex) {
                 row.forEach(function (tile, columnIndex) {
                     if (tile.row != tile.oldRow || tile.column != tile.oldColumn) {
-                        EventManager_1.EventManager.emit("moveTile", { id: tile.id, oldX: tile.oldRow, oldY: tile.oldColumn, newX: tile.row, newY: tile.column });
+                        EventManager_1.EventManager.emit("moveTile", { id: tile.id, oldX: tile.row, oldY: tile.column, newX: rowIndex, newY: columnIndex });
                     }
                     tile.oldRow = tile.row;
                     tile.oldColumn = tile.column;
@@ -513,7 +513,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
         }
     };
     function gridToScene(row, col) {
-        var convertedPos = new Vector3((row) - 2.5, (col) - 2.5, 0);
+        var convertedPos = new Vector3((row + 1) - 2.5, (col + 1) - 2.5, 0);
         return convertedPos;
     }
     function shiftBlocks(direction) {
@@ -636,6 +636,7 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
     EventManager_2.EventManager.on("newTile", function (e) {
         //debugger
         spawner.spawnGem(e.id, e.val, e.x, e.y);
+        log("new tile X:" + e.x + " Y: " + e.y);
         // sound
     });
     EventManager_2.EventManager.on("moveTile", function (e) {
@@ -650,16 +651,16 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
     });
     EventManager_2.EventManager.on("merge", function (e) {
         var oldGem = gems.entities.filter(function (gem) {
-            return gem.getOrNull(TileData).id == e.old;
+            return gem.getOrNull(TileData).id == e.oldId;
         })[0];
         var targetGem = gems.entities.filter(function (gem) {
-            return gem.getOrNull(TileData).id == e.target;
+            return gem.getOrNull(TileData).id == e.targetId;
         })[0];
         engine.removeEntity(oldGem);
-        var newModelVal = targetGem.getOrNull(TileData).val * 2;
-        var shapeIndex = values.indexOf(newModelVal);
+        var targetModelVal = targetGem.getOrNull(TileData).val * 2;
+        var shapeIndex = values.indexOf(targetModelVal);
         targetGem.set(gemModels[shapeIndex]);
-        debugger;
+        //debugger
         // sound
     });
     EventManager_2.EventManager.emit("test", { test: 5 });

@@ -348,44 +348,54 @@ input.subscribe("BUTTON_A_UP", e => {
 })
 
 
-EventManager.on("newTile", e => {
-  let id = Math.floor(Math.random() * 10) + 1
-  let index = Math.floor(Math.random() * values.length)
-  let val = values[index]
-  let x = Math.floor(Math.random() * 4) + 1
-  let y = Math.floor(Math.random() * 4) + 1
-  spawner.spawnGem(id, val, x, y)
+// EventManager.on("newTile", e => {
+//   let id = Math.floor(Math.random() * 10) + 1
+//   let index = Math.floor(Math.random() * values.length)
+//   let val = values[index]
+//   let x = Math.floor(Math.random() * 4) + 1
+//   let y = Math.floor(Math.random() * 4) + 1
+//   spawner.spawnGem(id, val, x, y)
+//   // sound
+// })
 
+EventManager.on("newTile", e => {
+  //debugger
+  spawner.spawnGem(e.id, e.val, e.x , e.y )
   // sound
 })
 
 EventManager.on("moveTile", e => {
-  let newX = Math.floor(Math.random() * 4) + 1
-  let newY = Math.floor(Math.random() * 4) + 1
-  let oldX = Math.floor(Math.random() * 4) + 1
-  let oldY = Math.floor(Math.random() * 4) + 1
-  let tileId = Math.floor(Math.random() * 10) + 1
-  let tileIndex = Math.floor(Math.random() * gems.entities.length)
-  let tile = gems.entities[tileIndex]
+  let tile = gems.entities.filter(function (gem) {
+    return gem.getOrNull(TileData).id == e.id;
+})[0];
   let tileData = tile.getOrNull(TileData)
-  tileData.oldPos = new Vector2(oldX, oldY)
-  tileData.nextPos = new Vector2(newX, newY)
+  tileData.oldPos = new Vector2(e.oldX, e.oldY)
+  tileData.nextPos = new Vector2(e.newX, e.newY)
   tileData.lerp = 0
+  //debugger
 })
 
 
 EventManager.on("merge", e => {
-  let old = Math.floor(Math.random() * gems.entities.length)
-  let target = Math.floor(Math.random() * gems.entities.length)
-  let oldGem = gems.entities[old]
-  let targetGem = gems.entities[target]
+  let oldGem = gems.entities.filter(function (gem) {
+    return gem.getOrNull(TileData).id == e.old;
+})[0];
+  let targetGem = gems.entities.filter(function (gem) {
+  return gem.getOrNull(TileData).id == e.target;
+})[0];
   engine.removeEntity(oldGem)
   let newModelVal = targetGem.getOrNull(TileData).val * 2
   let shapeIndex = values.indexOf(newModelVal)
   targetGem.set(gemModels[shapeIndex])
-
+  debugger
   // sound
 })
+
+EventManager.emit("test", {test: 5})
+
+EventManager.on("test", function(e) {
+  log("dude does this work? " + e.test)
+ })
 
 
 EventManager.on("win", e => {

@@ -59,6 +59,10 @@ export class Tile {
     this.markForDeletion = false;
     this.id = TileId++;
     this.justAdded = true;
+    if (this.value != 0)
+    { 
+      EventManager.emit("newTile", { id: this.id, val:this.value, x: this.row, y: this.column})
+    }
   }
   moveTo(row, column) {    // FUNCTION NEVER CALLED
     //EventManager.emit("moveTile", {id:this.id, oldX: this.row, oldY: this.column, newX: row, newY: column } )
@@ -125,7 +129,6 @@ export class Board {
   addTile(value, row, column) {
     var res: Tile = new Tile(value, row, column);
     this.tiles.push(res);
-    //EventManager.emit("newTile")
     return res;
   }
   moveLeft() {
@@ -185,7 +188,6 @@ export class Board {
     var newValue = Math.random() < this.fourProbability ? 4 : 2;
     //console.log("new cell added, " + cell.r + " & " + cell.c)
     this.cells[cell.r][cell.c] = this.addTile(newValue, cell.r, cell.c);
-    EventManager.emit("newTile", { id: TileId, val:newValue, x: cell.r, y: cell.c})
   }
   move(direction) {
     // 0 -> left, 1 -> up, 2 -> right, 3 -> down

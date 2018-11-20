@@ -93,13 +93,9 @@ define("ts/EventManager", ["require", "exports"], function (require, exports) {
             subscriptions[evt].push(callback);
         }
         EventManager.on = on;
-        function emit(evt) {
-            var params = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                params[_i - 1] = arguments[_i];
-            }
+        function emit(evt, params) {
             if (subscriptions[evt]) {
-                subscriptions[evt].forEach(function (c) { return c(); });
+                subscriptions[evt].forEach(function (callback) { return callback(params); });
             }
         }
         EventManager.emit = emit;
@@ -148,6 +144,9 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             this.markForDeletion = false;
             this.id = TileId++;
             this.justAdded = true;
+            if (this.value != 0) {
+                EventManager_1.EventManager.emit("newTile", { id: this.id, val: this.value, x: this.row, y: this.column });
+            }
         }
         Tile.prototype.moveTo = function (row, column) {
             //EventManager.emit("moveTile", {id:this.id, oldX: this.row, oldY: this.column, newX: row, newY: column } )
@@ -200,7 +199,6 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
         Board.prototype.addTile = function (value, row, column) {
             var res = new Tile(value, row, column);
             this.tiles.push(res);
-            //EventManager.emit("newTile")
             return res;
         };
         Board.prototype.moveLeft = function () {
@@ -259,7 +257,6 @@ define("src/board", ["require", "exports", "ts/EventManager"], function (require
             var newValue = Math.random() < this.fourProbability ? 4 : 2;
             //console.log("new cell added, " + cell.r + " & " + cell.c)
             this.cells[cell.r][cell.c] = this.addTile(newValue, cell.r, cell.c);
-            EventManager_1.EventManager.emit("newTile", { id: TileId, val: newValue, x: cell.r, y: cell.c });
         };
         Board.prototype.move = function (direction) {
             // 0 -> left, 1 -> up, 2 -> right, 3 -> down
@@ -627,38 +624,47 @@ define("src/game", ["require", "exports", "src/board", "ts/EventManager"], funct
         log("direction " + direction);
         shiftBlocks(direction);
     });
+    // EventManager.on("newTile", e => {
+    //   let id = Math.floor(Math.random() * 10) + 1
+    //   let index = Math.floor(Math.random() * values.length)
+    //   let val = values[index]
+    //   let x = Math.floor(Math.random() * 4) + 1
+    //   let y = Math.floor(Math.random() * 4) + 1
+    //   spawner.spawnGem(id, val, x, y)
+    //   // sound
+    // })
     EventManager_2.EventManager.on("newTile", function (e) {
-        var id = Math.floor(Math.random() * 10) + 1;
-        var index = Math.floor(Math.random() * values.length);
-        var val = values[index];
-        var x = Math.floor(Math.random() * 4) + 1;
-        var y = Math.floor(Math.random() * 4) + 1;
-        spawner.spawnGem(id, val, x, y);
+        //debugger
+        spawner.spawnGem(e.id, e.val, e.x, e.y);
         // sound
     });
     EventManager_2.EventManager.on("moveTile", function (e) {
-        var newX = Math.floor(Math.random() * 4) + 1;
-        var newY = Math.floor(Math.random() * 4) + 1;
-        var oldX = Math.floor(Math.random() * 4) + 1;
-        var oldY = Math.floor(Math.random() * 4) + 1;
-        var tileId = Math.floor(Math.random() * 10) + 1;
-        var tileIndex = Math.floor(Math.random() * gems.entities.length);
-        var tile = gems.entities[tileIndex];
+        var tile = gems.entities.filter(function (gem) {
+            return gem.getOrNull(TileData).id == e.id;
+        })[0];
         var tileData = tile.getOrNull(TileData);
-        tileData.oldPos = new Vector2(oldX, oldY);
-        tileData.nextPos = new Vector2(newX, newY);
+        tileData.oldPos = new Vector2(e.oldX, e.oldY);
+        tileData.nextPos = new Vector2(e.newX, e.newY);
         tileData.lerp = 0;
+        //debugger
     });
     EventManager_2.EventManager.on("merge", function (e) {
-        var old = Math.floor(Math.random() * gems.entities.length);
-        var target = Math.floor(Math.random() * gems.entities.length);
-        var oldGem = gems.entities[old];
-        var targetGem = gems.entities[target];
+        var oldGem = gems.entities.filter(function (gem) {
+            return gem.getOrNull(TileData).id == e.old;
+        })[0];
+        var targetGem = gems.entities.filter(function (gem) {
+            return gem.getOrNull(TileData).id == e.target;
+        })[0];
         engine.removeEntity(oldGem);
         var newModelVal = targetGem.getOrNull(TileData).val * 2;
         var shapeIndex = values.indexOf(newModelVal);
         targetGem.set(gemModels[shapeIndex]);
+        debugger;
         // sound
+    });
+    EventManager_2.EventManager.emit("test", { test: 5 });
+    EventManager_2.EventManager.on("test", function (e) {
+        log("dude does this work? " + e.test);
     });
     EventManager_2.EventManager.on("win", function (e) {
         log("WIN!!");

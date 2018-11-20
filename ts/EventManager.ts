@@ -34,18 +34,18 @@
 // MY VERSION
 export namespace EventManager {
 
-  const subscriptions: Record<string, Array<() => void> > = {}
+  const subscriptions: Record<string, Array<(params?: any) => void> > = {}
 
-  export function on(evt: string, callback: (...args: any[]) => void) {
+  export function on(evt: string, callback: (params?: any) => void) {
     if (!subscriptions[evt]){
       subscriptions[evt] = []    
     }
     subscriptions[evt].push(callback)
   }
 
-  export function emit(evt: string, ...params: any[]) {
+  export function emit(evt: string, params?: any) {
     if (subscriptions[evt]){
-      subscriptions[evt].forEach(c => c())
+      subscriptions[evt].forEach(callback => callback(params))
     }
   }
 

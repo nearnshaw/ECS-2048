@@ -57,6 +57,7 @@ export class Tile {
     this.oldRow = -1;
     this.oldColumn = -1;
     this.markForDeletion = false;
+    //this.id = Math.floor( Math.random() * 300)
     this.id = TileId++;
     this.justAdded = true;
     if (this.value != 0 && this.row > -1 && this.column > -1)
@@ -65,8 +66,7 @@ export class Tile {
     }
   }
   moveTo(row, column) {    // FUNCTION NEVER CALLED
-    //EventManager.emit("moveTile", {id:this.id, oldX: this.row, oldY: this.column, newX: row, newY: column } )
-
+ 
     this.oldRow = this.row;
     this.oldColumn = this.column;
     this.row = row;
@@ -160,12 +160,22 @@ export class Board {
     return hasChanged;
   }
 
-  setPositions() {
-    this.cells.forEach((row, rowIndex) => {
-      row.forEach((tile, columnIndex) => {
+  sendTileData(){
+    this.tiles.forEach(tile => { 
+      if (tile.value != 0){
+        log("tile ID: " + tile.id + " X: " + tile.row + " Y: " + tile.column)
         if (tile.row != tile.oldRow || tile.column != tile.oldColumn){
-          EventManager.emit("moveTile", {id:tile.id, oldX: tile.row, oldY: tile.column, newX: rowIndex, newY: columnIndex } )
+          EventManager.emit("moveTile", {id:tile.id, oldX: tile.oldRow, oldY: tile.oldColumn, newX: tile.row, newY: tile.column } )
         }
+      }
+    });
+
+  }
+
+  setPositions() {
+    this.sendTileData()
+    this.cells.forEach((row, rowIndex) => {
+      row.forEach((tile, columnIndex) => {    
         tile.oldRow = tile.row;
         tile.oldColumn = tile.column;
         tile.row = rowIndex;
@@ -173,6 +183,7 @@ export class Board {
         tile.markForDeletion = false;
       });
     });
+    
   }
   addRandomTile() {
     var emptyCells: any[] = [];

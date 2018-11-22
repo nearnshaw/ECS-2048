@@ -40,7 +40,16 @@ export class TileData {
   sizeLerp: number = 0
 }
 
-
+@Component('boardData')
+export class BoardData {
+  tiles: Entity[]
+  cells: Entity[][]
+  won : boolean
+  size: number = 4
+  fourProbability: number = 0.1
+  deltaX : number[] = [-1, 0, 1, 0]
+  deltaY: number[] = [0, -1, 0, 1]
+}
 
 
 ///////////////////////////
@@ -361,19 +370,25 @@ input.subscribe("BUTTON_A_UP", e => {
 EventManager.on("newTile", e => {
   //debugger
   spawner.spawnGem(e.id, e.val, e.x , e.y )
-  log("new tile X:" + e.x + " Y: " + e.y)
+  log("new tile ID: " + e.id + "  X:" + e.x + " Y: " + e.y)
   // sound
 })
 
 EventManager.on("moveTile", e => {
   let tile = gems.entities.filter(function (gem) {
     return gem.getOrNull(TileData).id == e.id;
-})[0];
-  let tileData = tile.getOrNull(TileData)
-  tileData.oldPos = new Vector2(e.oldX, e.oldY)
-  tileData.nextPos = new Vector2(e.newX, e.newY)
-  tileData.lerp = 0
-  //debugger
+  })[0];
+  if (tile){
+    let tileData = tile.getOrNull(TileData)
+    tileData.oldPos = new Vector2(e.oldX, e.oldY)
+    tileData.nextPos = new Vector2(e.newX, e.newY)
+    tileData.lerp = 0
+    log("moved tile: " + e.id)
+    //debugger
+  }
+  else{
+    log("moved unidentified tile, ID: " + e.id )
+  }
 })
 
 
@@ -384,19 +399,18 @@ EventManager.on("merge", e => {
   let targetGem = gems.entities.filter(function (gem) {
   return gem.getOrNull(TileData).id == e.targetId;
 })[0];
+if (oldGem && targetGem){
   engine.removeEntity(oldGem)
   let targetModelVal = targetGem.getOrNull(TileData).val * 2
   let shapeIndex = values.indexOf(targetModelVal)
   targetGem.set(gemModels[shapeIndex])
+} else {
+  log("merged unidentified tiles, old: " + e.oldID + " target: " + e.targetID )
+}
+ 
   //debugger
   // sound
 })
-
-EventManager.emit("test", {test: 5})
-
-EventManager.on("test", function(e) {
-  log("dude does this work? " + e.test)
- })
 
 
 EventManager.on("win", e => {

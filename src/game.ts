@@ -9,6 +9,15 @@ const camera = Camera.instance
 const values = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 
 
+export enum Directions {
+  LEFT = "left",
+  UP = "up",
+  RIGHT = "right",
+  DOWN = "down"
+}
+
+let TileId: number = 0;
+
 // CUSTOM COMPONENTS
 
 @Component('openLerp')
@@ -42,8 +51,8 @@ export class TileData {
 
 @Component('boardData')
 export class BoardData {
-  tiles: Entity[]
-  cells: Entity[][]
+  tiles: Entity[] = []
+  //cells: Entity[][]
   won : boolean
   size: number = 4
   fourProbability: number = 0.1
@@ -127,7 +136,7 @@ function openChest(){
   state.open = !state.open
   switch (state.open){
     case true :
-      board = new Board()
+      //board = new Board()
       chestOpen.play()
       chestLightOpen.play()
       // play sounds
@@ -167,14 +176,13 @@ const spawner = {
     return null
   },
 
-  spawnGem(id: number, model: number, x: number, y: number) {
+  spawnGem(id: number, val: number, x: number, y: number) {
     const ent = spawner.getEntityFromPool()
 
     if (!ent) return
 
-    let shapeIndex = values.indexOf(model)
+    let shapeIndex = values.indexOf(val)
     ent.set(gemModels[shapeIndex])
-
 
     if (!ent.getOrNull(Transform)) {
       const t = new Transform()
@@ -190,37 +198,64 @@ const spawner = {
       const p = new TileData()
       ent.set(p)
       p.id = id
-      p.val = model
+      p.val = val
       p.pos = new Vector2(x, y)
       p.lerp = 1
       p.sizeLerp = 0
     } else {
       const p = ent.get(TileData)
       p.id = id
-      p.val = model
+      p.val = val
       p.pos = new Vector2(x, y)
       p.lerp = 1
       p.sizeLerp = 0
     }
 
-
+    board.get(BoardData).tiles.push(ent)
     engine.addEntity(ent)
   }
 }
 
 
-function gridToScene(row: number, col: number){
+function gridToScene(x: number, y: number){
   let convertedPos = new Vector3(
-    (row + 1  ) - 2.5 ,
-    (col + 1 ) - 2.5,
+    (x + 1  ) - 2.5,
+    (-y + 1 ) + 0.5,
     0
   )
   return convertedPos
 }
 
+function addRandomGem(){
+  var emptyCells: any[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ,15]
+  var boardData = board.get(BoardData)
+  for (let tile in boardData.tiles){
+    let tileData = boardData.tiles[tile].get(TileData)
+    let tilePos = tileData.pos.x + (tileData.pos.y * 4)
+    let index = emptyCells.indexOf(tilePos)
+    emptyCells.splice(index, 1)
+  }
+  //log(emptyCells)
+  if (emptyCells.length  == 0){
+    loose()
+  }
+
+  var index = ~~(Math.random() * emptyCells.length);
+  var cell = emptyCells[index];
+  var newValue = Math.random() < boardData.fourProbability ? 4 : 2;
+  var cellY = Math.floor(cell/4)
+  var cellX = cell % 4
+  var id = TileId++
+  log("new cell added, pos: " + cell + "  "  + cellX + " & " + cellY)
+  spawner.spawnGem(id, newValue, cellX , cellY )
+}
+
 
 function shiftBlocks(direction:number){
-  board.move(direction)
+  //board.move(direction)
+  // if  (moved() ){
+    addRandomGem()
+  //}
 }
 
 
@@ -229,8 +264,9 @@ function shiftBlocks(direction:number){
 // INITIAL POSITIONS OF STUFF
 
 // Board object
-let board = new Board()
-
+//let board = new Board()
+const board = new Entity()
+board.set(new BoardData())
 
 
 // Island
@@ -342,20 +378,24 @@ input.subscribe("BUTTON_A_UP", e => {
   swipes.posOnUp = camera.rotation.eulerAngles
   let deltaX : number = swipes.posOnDown.x - swipes.posOnUp.x
   let deltaY : number = swipes.posOnDown.y - swipes.posOnUp.y
-  let direction: number = -1
+  let direction: Directions
   if(  Math.abs(deltaY) < 3 && deltaX < -5){
-    direction = 0
+    direction = Directions.LEFT
   } else if (deltaY > 5 && Math.abs(deltaX) < 3){
-    direction = 1
+    direction = Directions.UP
   } else if (  Math.abs(deltaY) < 3 && deltaX > 5){
-    direction = 2
+    direction = Directions.RIGHT
   } else if (deltaY < -5 && Math.abs(deltaX) < 3){
-    direction = 3
+    direction = Directions.DOWN
   }
   log("direction " + direction)
   shiftBlocks(direction)
 })
 
+
+function loose(){
+  log("YOU LOST")
+}
 
 // EventManager.on("newTile", e => {
 //   let id = Math.floor(Math.random() * 10) + 1
@@ -367,59 +407,59 @@ input.subscribe("BUTTON_A_UP", e => {
 //   // sound
 // })
 
-EventManager.on("newTile", e => {
-  //debugger
-  spawner.spawnGem(e.id, e.val, e.x , e.y )
-  log("new tile ID: " + e.id + "  X:" + e.x + " Y: " + e.y)
-  // sound
-})
+// EventManager.on("newTile", e => {
+//   //debugger
+//   spawner.spawnGem(e.id, e.val, e.x , e.y )
+//   log("new tile ID: " + e.id + "  X:" + e.x + " Y: " + e.y)
+//   // sound
+// })
 
-EventManager.on("moveTile", e => {
-  let tile = gems.entities.filter(function (gem) {
-    return gem.getOrNull(TileData).id == e.id;
-  })[0];
-  if (tile){
-    let tileData = tile.getOrNull(TileData)
-    tileData.oldPos = new Vector2(e.oldX, e.oldY)
-    tileData.nextPos = new Vector2(e.newX, e.newY)
-    tileData.lerp = 0
-    log("moved tile: " + e.id)
-    //debugger
-  }
-  else{
-    log("moved unidentified tile, ID: " + e.id )
-  }
-})
+// EventManager.on("moveTile", e => {
+//   let tile = gems.entities.filter(function (gem) {
+//     return gem.getOrNull(TileData).id == e.id;
+//   })[0];
+//   if (tile){
+//     let tileData = tile.getOrNull(TileData)
+//     tileData.oldPos = new Vector2(e.oldX, e.oldY)
+//     tileData.nextPos = new Vector2(e.newX, e.newY)
+//     tileData.lerp = 0
+//     log("moved tile: " + e.id)
+//     //debugger
+//   }
+//   else{
+//     log("moved unidentified tile, ID: " + e.id )
+//   }
+// })
 
 
-EventManager.on("merge", e => {
-  let oldGem = gems.entities.filter(function (gem) {
-    return gem.getOrNull(TileData).id == e.oldId;
-})[0];
-  let targetGem = gems.entities.filter(function (gem) {
-  return gem.getOrNull(TileData).id == e.targetId;
-})[0];
-if (oldGem && targetGem){
-  engine.removeEntity(oldGem)
-  let targetModelVal = targetGem.getOrNull(TileData).val * 2
-  let shapeIndex = values.indexOf(targetModelVal)
-  targetGem.set(gemModels[shapeIndex])
-} else {
-  log("merged unidentified tiles, old: " + e.oldID + " target: " + e.targetID )
-}
+// EventManager.on("merge", e => {
+//   let oldGem = gems.entities.filter(function (gem) {
+//     return gem.getOrNull(TileData).id == e.oldId;
+// })[0];
+//   let targetGem = gems.entities.filter(function (gem) {
+//   return gem.getOrNull(TileData).id == e.targetId;
+// })[0];
+// if (oldGem && targetGem){
+//   engine.removeEntity(oldGem)
+//   let targetModelVal = targetGem.getOrNull(TileData).val * 2
+//   let shapeIndex = values.indexOf(targetModelVal)
+//   targetGem.set(gemModels[shapeIndex])
+// } else {
+//   log("merged unidentified tiles, old: " + e.oldID + " target: " + e.targetID )
+// }
  
-  //debugger
-  // sound
-})
+//   //debugger
+//   // sound
+// })
 
 
-EventManager.on("win", e => {
- log("WIN!!")
-})
+// EventManager.on("win", e => {
+//  log("WIN!!")
+// })
 
-EventManager.on("loose", e => {
-  log("LOOSE!!")
- })
+// EventManager.on("loose", e => {
+//   log("LOOSE!!")
+//  })
 
 
  

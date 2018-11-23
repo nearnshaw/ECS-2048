@@ -360,6 +360,8 @@ define("src/game", ["require", "exports"], function (require, exports) {
         function TileData() {
             this.lerp = 1;
             this.sizeLerp = 0;
+            this.willDie = false;
+            this.willUpgrade = false;
         }
         TileData = __decorate([
             Component('tileData')
@@ -420,8 +422,22 @@ define("src/game", ["require", "exports"], function (require, exports) {
                     var transform = gem.get(Transform);
                     if (data.lerp < 1) {
                         data.lerp += dt * 2;
+                        if (data.lerp > 1) {
+                            data.lerp = 1;
+                        }
                         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp);
                         transform.position = gridToScene(data.pos.x, data.pos.y);
+                    }
+                    else {
+                        if (data.willDie) {
+                            engine.removeEntity(gem);
+                        }
+                        else if (data.willUpgrade) {
+                            var targetModelVal = data.val;
+                            var shapeIndex = values.indexOf(targetModelVal);
+                            gem.set(gemModels[shapeIndex]);
+                            data.willUpgrade = false;
+                        }
                     }
                 }
             }
@@ -527,16 +543,24 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 p.id = id;
                 p.val = val;
                 p.pos = new Vector2(x, y);
+                p.nextPos = new Vector2(x, y);
+                p.oldPos = new Vector2(x, y);
                 p.lerp = 1;
                 p.sizeLerp = 0;
+                p.willDie = false;
+                p.willUpgrade = false;
             }
             else {
                 var p = ent.get(TileData);
                 p.id = id;
                 p.val = val;
                 p.pos = new Vector2(x, y);
+                p.nextPos = new Vector2(x, y);
+                p.oldPos = new Vector2(x, y);
                 p.lerp = 1;
                 p.sizeLerp = 0;
+                p.willDie = false;
+                p.willUpgrade = false;
             }
             //board.get(BoardData).tiles.push(ent)
             engine.addEntity(ent);
@@ -551,7 +575,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         var boardData = board.get(BoardData);
         for (var tile in gems.entities) {
             var tileData = gems.entities[tile].get(TileData);
-            var tilePos = tileData.pos.x + (tileData.pos.y * 4);
+            var tilePos = tileData.nextPos.x + (tileData.nextPos.y * 4);
             var index_1 = emptyCells.indexOf(tilePos);
             emptyCells.splice(index_1, 1);
         }
@@ -578,34 +602,61 @@ define("src/game", ["require", "exports"], function (require, exports) {
             case Directions.DOWN:
                 break;
             case Directions.LEFT:
-                // for (var row = 0; row < this.size; ++row) {
-                //   var currentRow = boardData.cells[row].filter(tile => tile.value != 0);
-                //   var resultRow: Tile[] = [];
-                //   for (var target = 0; target < this.size; ++target) {
-                //     var targetTile : any = currentRow.length ? currentRow.shift() : this.addTile(0,-1,-1);
-                //     if (currentRow.length > 0 && currentRow[0].value == targetTile.value) {
-                //       var tile1 : Tile = targetTile;
-                //       targetTile = this.addTile(targetTile.value, targetTile.row, targetTile.column  );
-                //       tile1.mergedInto = targetTile;
-                //       var tile2 : any = currentRow.shift();
-                //       tile2.row = tile1.row
-                //       tile2.column = tile1.column
-                //       mergeTiles(tile2, targetTile)
-                //       targetTile.value += tile2.value;
-                //     }
-                //     resultRow[target] = targetTile;
-                //     if (targetTile.value == 2048) {
-                //       this.victory()
-                //     }
-                //     hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
-                //   }
-                //   this.cells[row] = resultRow;
-                // }
+                for (var row = 0; row < boardData.size; ++row) {
+                    var currentRow = [null, null, null, null];
+                    for (var gem in gems.entities) {
+                        var tilePos = gems.entities[gem].get(TileData).nextPos;
+                        if (tilePos.y == row) {
+                            currentRow[tilePos.x] = gems.entities[gem];
+                        }
+                    }
+                    for (var target = 0; target < boardData.size; ++target) {
+                        if (currentRow[target] == null) {
+                            for (var tile = target + 1; tile < currentRow.length; ++tile) {
+                                if (currentRow[tile]) {
+                                    var tileData = currentRow[tile].get(TileData);
+                                    tileData.nextPos.x--;
+                                    tileData.lerp = 0;
+                                }
+                            }
+                            //debugger
+                        }
+                        else {
+                            var targetData = currentRow[target].get(TileData);
+                            for (var tile = target + 1; tile < currentRow.length; ++tile) {
+                                if (currentRow[tile]) {
+                                    var tileData = currentRow[tile].get(TileData);
+                                    if (tileData.val == targetData.val) {
+                                        //debugger
+                                        tileData.nextPos.x--;
+                                        tileData.lerp = 0;
+                                        tileData.willDie = true;
+                                        currentRow[target].get(TileData).willUpgrade = true;
+                                        targetData.val *= 2;
+                                    }
+                                    else {
+                                        // exit loop
+                                        tile = currentRow.length;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 break;
         }
-        // if  (moved() ){
+        //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
+        // if  (hasChanged() ){
         addRandomGem();
         //}
+    }
+    function moveGem(gem, newX, newY) {
+        var tileData = gem.getOrNull(TileData);
+        tileData.oldPos = tileData.pos;
+        tileData.nextPos = new Vector2(newX, newY);
+        tileData.lerp = 0;
+        log("moved tile: " + tileData.id);
+        //debugger
     }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF
@@ -700,16 +751,16 @@ define("src/game", ["require", "exports"], function (require, exports) {
         var deltaY = swipes.posOnDown.y - swipes.posOnUp.y;
         var direction;
         if (Math.abs(deltaY) < 3 && deltaX < -5) {
-            direction = Directions.LEFT;
+            direction = Directions.DOWN;
         }
         else if (deltaY > 5 && Math.abs(deltaX) < 3) {
-            direction = Directions.UP;
-        }
-        else if (Math.abs(deltaY) < 3 && deltaX > 5) {
             direction = Directions.RIGHT;
         }
+        else if (Math.abs(deltaY) < 3 && deltaX > 5) {
+            direction = Directions.UP;
+        }
         else if (deltaY < -5 && Math.abs(deltaX) < 3) {
-            direction = Directions.DOWN;
+            direction = Directions.LEFT;
         }
         log("direction " + direction);
         shiftBlocks(direction);
@@ -718,21 +769,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
         log("YOU LOST");
     }
 });
-// EventManager.on("newTile", e => {
-//   let id = Math.floor(Math.random() * 10) + 1
-//   let index = Math.floor(Math.random() * values.length)
-//   let val = values[index]
-//   let x = Math.floor(Math.random() * 4) + 1
-//   let y = Math.floor(Math.random() * 4) + 1
-//   spawner.spawnGem(id, val, x, y)
-//   // sound
-// })
-// EventManager.on("newTile", e => {
-//   //debugger
-//   spawner.spawnGem(e.id, e.val, e.x , e.y )
-//   log("new tile ID: " + e.id + "  X:" + e.x + " Y: " + e.y)
-//   // sound
-// })
 // EventManager.on("moveTile", e => {
 //   let tile = gems.entities.filter(function (gem) {
 //     return gem.getOrNull(TileData).id == e.id;

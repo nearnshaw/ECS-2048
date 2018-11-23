@@ -51,7 +51,7 @@ export class TileData {
 
 @Component('boardData')
 export class BoardData {
-  tiles: Entity[] = []
+  //tiles: Entity[] = []
   //cells: Entity[][]
   won : boolean
   size: number = 4
@@ -211,7 +211,7 @@ const spawner = {
       p.sizeLerp = 0
     }
 
-    board.get(BoardData).tiles.push(ent)
+    //board.get(BoardData).tiles.push(ent)
     engine.addEntity(ent)
   }
 }
@@ -229,8 +229,8 @@ function gridToScene(x: number, y: number){
 function addRandomGem(){
   var emptyCells: any[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ,15]
   var boardData = board.get(BoardData)
-  for (let tile in boardData.tiles){
-    let tileData = boardData.tiles[tile].get(TileData)
+  for (let tile in gems.entities){
+    let tileData = gems.entities[tile].get(TileData)
     let tilePos = tileData.pos.x + (tileData.pos.y * 4)
     let index = emptyCells.indexOf(tilePos)
     emptyCells.splice(index, 1)
@@ -251,8 +251,43 @@ function addRandomGem(){
 }
 
 
-function shiftBlocks(direction:number){
-  //board.move(direction)
+function shiftBlocks(direction:Directions){
+  var boardData = board.get(BoardData)
+  switch (direction){
+    case Directions.UP:
+
+      break
+    case Directions.RIGHT:
+      break
+    case Directions.DOWN:
+      break
+    case Directions.LEFT:
+      // for (var row = 0; row < this.size; ++row) {
+      //   var currentRow = boardData.cells[row].filter(tile => tile.value != 0);
+      //   var resultRow: Tile[] = [];
+      //   for (var target = 0; target < this.size; ++target) {
+      //     var targetTile : any = currentRow.length ? currentRow.shift() : this.addTile(0,-1,-1);
+      //     if (currentRow.length > 0 && currentRow[0].value == targetTile.value) {
+      //       var tile1 : Tile = targetTile;
+      //       targetTile = this.addTile(targetTile.value, targetTile.row, targetTile.column  );
+      //       tile1.mergedInto = targetTile;
+      //       var tile2 : any = currentRow.shift();
+      //       tile2.row = tile1.row
+      //       tile2.column = tile1.column
+      //       mergeTiles(tile2, targetTile)
+      //       targetTile.value += tile2.value;
+      //     }
+      //     resultRow[target] = targetTile;
+      //     if (targetTile.value == 2048) {
+      //       this.victory()
+      //     }
+      //     hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
+      //   }
+      //   this.cells[row] = resultRow;
+      // }
+      break
+
+  }
   // if  (moved() ){
     addRandomGem()
   //}

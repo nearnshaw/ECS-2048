@@ -369,7 +369,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
     exports.TileData = TileData;
     var BoardData = /** @class */ (function () {
         function BoardData() {
-            this.tiles = [];
             this.size = 4;
             this.fourProbability = 0.1;
             this.deltaX = [-1, 0, 1, 0];
@@ -539,7 +538,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 p.lerp = 1;
                 p.sizeLerp = 0;
             }
-            board.get(BoardData).tiles.push(ent);
+            //board.get(BoardData).tiles.push(ent)
             engine.addEntity(ent);
         }
     };
@@ -550,8 +549,8 @@ define("src/game", ["require", "exports"], function (require, exports) {
     function addRandomGem() {
         var emptyCells = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
         var boardData = board.get(BoardData);
-        for (var tile in boardData.tiles) {
-            var tileData = boardData.tiles[tile].get(TileData);
+        for (var tile in gems.entities) {
+            var tileData = gems.entities[tile].get(TileData);
             var tilePos = tileData.pos.x + (tileData.pos.y * 4);
             var index_1 = emptyCells.indexOf(tilePos);
             emptyCells.splice(index_1, 1);
@@ -570,7 +569,40 @@ define("src/game", ["require", "exports"], function (require, exports) {
         spawner.spawnGem(id, newValue, cellX, cellY);
     }
     function shiftBlocks(direction) {
-        //board.move(direction)
+        var boardData = board.get(BoardData);
+        switch (direction) {
+            case Directions.UP:
+                break;
+            case Directions.RIGHT:
+                break;
+            case Directions.DOWN:
+                break;
+            case Directions.LEFT:
+                // for (var row = 0; row < this.size; ++row) {
+                //   var currentRow = boardData.cells[row].filter(tile => tile.value != 0);
+                //   var resultRow: Tile[] = [];
+                //   for (var target = 0; target < this.size; ++target) {
+                //     var targetTile : any = currentRow.length ? currentRow.shift() : this.addTile(0,-1,-1);
+                //     if (currentRow.length > 0 && currentRow[0].value == targetTile.value) {
+                //       var tile1 : Tile = targetTile;
+                //       targetTile = this.addTile(targetTile.value, targetTile.row, targetTile.column  );
+                //       tile1.mergedInto = targetTile;
+                //       var tile2 : any = currentRow.shift();
+                //       tile2.row = tile1.row
+                //       tile2.column = tile1.column
+                //       mergeTiles(tile2, targetTile)
+                //       targetTile.value += tile2.value;
+                //     }
+                //     resultRow[target] = targetTile;
+                //     if (targetTile.value == 2048) {
+                //       this.victory()
+                //     }
+                //     hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
+                //   }
+                //   this.cells[row] = resultRow;
+                // }
+                break;
+        }
         // if  (moved() ){
         addRandomGem();
         //}

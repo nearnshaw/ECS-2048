@@ -46,10 +46,32 @@ export class TileData {
   pos: Vector2    //maybe not needed
   nextPos: Vector2
   oldPos: Vector2
-  lerp: number = 1
-  sizeLerp: number = 0
-  willDie: boolean = false
-  willUpgrade: boolean = false
+  lerp: number
+  sizeLerp: number
+  willDie: boolean
+  willUpgrade: boolean
+  constructor(id: number, val: number, x: number, y: number ){
+    this.id = id
+    this.val = val
+    this.pos = new Vector2(x, y)
+    this.nextPos = new Vector2(x, y)
+    this.oldPos = new Vector2(x, y)
+    this.lerp = 1
+    this.sizeLerp = 0
+    this.willDie = false
+    this.willUpgrade = false
+  }
+  reset(id: number, val: number, x: number, y: number ){
+    this.id = id
+    this.val = val
+    this.pos = new Vector2(x, y)
+    this.nextPos = new Vector2(x, y)
+    this.oldPos = new Vector2(x, y)
+    this.lerp = 1
+    this.sizeLerp = 0
+    this.willDie = false
+    this.willUpgrade = false
+  }
 }
 
 @Component('boardData')
@@ -107,17 +129,22 @@ export class MoveTiles implements ISystem {
         if (data.lerp > 1){data.lerp = 1}
         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp)
         transform.position = gridToScene(data.pos.x, data.pos.y)
+        log(data.oldPos.x)
       }
       else {
         if (data.willDie){
            engine.removeEntity(gem)
-        } else if (data.willUpgrade){
-          let targetModelVal = data.val
-          let shapeIndex = values.indexOf(targetModelVal)
-          gem.set(gemModels[shapeIndex])
-          data.willUpgrade = false
-        }
-
+           for (let targetGem of gems.entities) {
+              let targetData = targetGem.get(TileData)
+              if (targetData.pos.x == data.pos.x && targetData.pos.y == data.pos.y && targetData.willUpgrade){
+                let targetModelVal = targetData.val
+                let shapeIndex = values.indexOf(targetModelVal)
+                targetGem.set(gemModels[shapeIndex])
+                targetData.willUpgrade = false
+              }
+           }
+        } 
+        
       }
     }
   }
@@ -212,28 +239,11 @@ const spawner = {
     }
 
     if (!ent.getOrNull(TileData)) {
-      const p = new TileData()
+      const p = new TileData(id, val, x, y)
       ent.set(p)
-      p.id = id
-      p.val = val
-      p.pos = new Vector2(x, y)
-      p.nextPos = new Vector2(x, y)
-      p.oldPos = new Vector2(x, y)
-      p.lerp = 1
-      p.sizeLerp = 0
-      p.willDie = false
-      p.willUpgrade = false
     } else {
       const p = ent.get(TileData)
-      p.id = id
-      p.val = val
-      p.pos = new Vector2(x, y)
-      p.nextPos = new Vector2(x, y)
-      p.oldPos = new Vector2(x, y)
-      p.lerp = 1
-      p.sizeLerp = 0
-      p.willDie = false
-      p.willUpgrade = false
+      p.reset(id, val, x, y)
     }
 
     //board.get(BoardData).tiles.push(ent)
@@ -320,6 +330,8 @@ function shiftBlocks(direction:Directions){
                     tileData.willDie = true
                     currentRow[target].get(TileData).willUpgrade = true
                     targetData.val *= 2
+                     // exit loop
+                     tile = currentRow.length
                   }
                   else {
                     // exit loop
@@ -343,15 +355,15 @@ function shiftBlocks(direction:Directions){
   //}
 }
 
-function moveGem(gem: Entity, newX: number, newY: number) {
+// function moveGem(gem: Entity, newX: number, newY: number) {
 
-  let tileData = gem.getOrNull(TileData)
-  tileData.oldPos = tileData.pos
-  tileData.nextPos = new Vector2(newX, newY)
-  tileData.lerp = 0
-  log("moved tile: " + tileData.id)
-    //debugger
-}
+//   let tileData = gem.getOrNull(TileData)
+//   tileData.oldPos = tileData.pos
+//   tileData.nextPos = new Vector2(newX, newY)
+//   tileData.lerp = 0
+//   log("moved tile: " + tileData.id)
+//     //debugger
+// }
 
 ///////////////////////////
 // INITIAL POSITIONS OF STUFF
@@ -490,53 +502,9 @@ function loose(){
   log("YOU LOST")
 }
 
-
-// EventManager.on("moveTile", e => {
-//   let tile = gems.entities.filter(function (gem) {
-//     return gem.getOrNull(TileData).id == e.id;
-//   })[0];
-//   if (tile){
-//     let tileData = tile.getOrNull(TileData)
-//     tileData.oldPos = new Vector2(e.oldX, e.oldY)
-//     tileData.nextPos = new Vector2(e.newX, e.newY)
-//     tileData.lerp = 0
-//     log("moved tile: " + e.id)
-//     //debugger
-//   }
-//   else{
-//     log("moved unidentified tile, ID: " + e.id )
-//   }
-// })
-
-
-// EventManager.on("merge", e => {
-//   let oldGem = gems.entities.filter(function (gem) {
-//     return gem.getOrNull(TileData).id == e.oldId;
-// })[0];
-//   let targetGem = gems.entities.filter(function (gem) {
-//   return gem.getOrNull(TileData).id == e.targetId;
-// })[0];
-// if (oldGem && targetGem){
-//   engine.removeEntity(oldGem)
-//   let targetModelVal = targetGem.getOrNull(TileData).val * 2
-//   let shapeIndex = values.indexOf(targetModelVal)
-//   targetGem.set(gemModels[shapeIndex])
-// } else {
-//   log("merged unidentified tiles, old: " + e.oldID + " target: " + e.targetID )
-// }
- 
-//   //debugger
-//   // sound
-// })
-
-
-// EventManager.on("win", e => {
-//  log("WIN!!")
-// })
-
-// EventManager.on("loose", e => {
-//   log("LOOSE!!")
-//  })
+function win(){
+  log("YOU WON!")
+}
 
 
  

@@ -357,14 +357,31 @@ define("src/game", ["require", "exports"], function (require, exports) {
     }());
     exports.SwipeDetection = SwipeDetection;
     var TileData = /** @class */ (function () {
-        function TileData() {
+        function TileData(id, val, x, y) {
+            this.id = id;
+            this.val = val;
+            this.pos = new Vector2(x, y);
+            this.nextPos = new Vector2(x, y);
+            this.oldPos = new Vector2(x, y);
             this.lerp = 1;
             this.sizeLerp = 0;
             this.willDie = false;
             this.willUpgrade = false;
         }
+        TileData.prototype.reset = function (id, val, x, y) {
+            this.id = id;
+            this.val = val;
+            this.pos = new Vector2(x, y);
+            this.nextPos = new Vector2(x, y);
+            this.oldPos = new Vector2(x, y);
+            this.lerp = 1;
+            this.sizeLerp = 0;
+            this.willDie = false;
+            this.willUpgrade = false;
+        };
         TileData = __decorate([
-            Component('tileData')
+            Component('tileData'),
+            __metadata("design:paramtypes", [Number, Number, Number, Number])
         ], TileData);
         return TileData;
     }());
@@ -414,10 +431,10 @@ define("src/game", ["require", "exports"], function (require, exports) {
         function MoveTiles() {
         }
         MoveTiles.prototype.update = function (dt) {
-            var e_1, _a;
+            var e_1, _a, e_2, _b;
             try {
-                for (var _b = __values(gems.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var gem = _c.value;
+                for (var _c = __values(gems.entities), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    var gem = _d.value;
                     var data = gem.get(TileData);
                     var transform = gem.get(Transform);
                     if (data.lerp < 1) {
@@ -427,16 +444,30 @@ define("src/game", ["require", "exports"], function (require, exports) {
                         }
                         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp);
                         transform.position = gridToScene(data.pos.x, data.pos.y);
+                        log(data.oldPos.x);
                     }
                     else {
                         if (data.willDie) {
                             engine.removeEntity(gem);
-                        }
-                        else if (data.willUpgrade) {
-                            var targetModelVal = data.val;
-                            var shapeIndex = values.indexOf(targetModelVal);
-                            gem.set(gemModels[shapeIndex]);
-                            data.willUpgrade = false;
+                            try {
+                                for (var _e = __values(gems.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
+                                    var targetGem = _f.value;
+                                    var targetData = targetGem.get(TileData);
+                                    if (targetData.pos.x == data.pos.x && targetData.pos.y == data.pos.y && targetData.willUpgrade) {
+                                        var targetModelVal = targetData.val;
+                                        var shapeIndex = values.indexOf(targetModelVal);
+                                        targetGem.set(gemModels[shapeIndex]);
+                                        targetData.willUpgrade = false;
+                                    }
+                                }
+                            }
+                            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                            finally {
+                                try {
+                                    if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+                                }
+                                finally { if (e_2) throw e_2.error; }
+                            }
                         }
                     }
                 }
@@ -444,7 +475,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
@@ -458,7 +489,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         function GrowTiles() {
         }
         GrowTiles.prototype.update = function (dt) {
-            var e_2, _a;
+            var e_3, _a;
             try {
                 for (var _b = __values(gems.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var gem = _c.value;
@@ -471,12 +502,12 @@ define("src/game", ["require", "exports"], function (require, exports) {
                     }
                 }
             }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            catch (e_3_1) { e_3 = { error: e_3_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_2) throw e_2.error; }
+                finally { if (e_3) throw e_3.error; }
             }
         };
         return GrowTiles;
@@ -538,29 +569,12 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 t.position = gridToScene(x, y);
             }
             if (!ent.getOrNull(TileData)) {
-                var p = new TileData();
+                var p = new TileData(id, val, x, y);
                 ent.set(p);
-                p.id = id;
-                p.val = val;
-                p.pos = new Vector2(x, y);
-                p.nextPos = new Vector2(x, y);
-                p.oldPos = new Vector2(x, y);
-                p.lerp = 1;
-                p.sizeLerp = 0;
-                p.willDie = false;
-                p.willUpgrade = false;
             }
             else {
                 var p = ent.get(TileData);
-                p.id = id;
-                p.val = val;
-                p.pos = new Vector2(x, y);
-                p.nextPos = new Vector2(x, y);
-                p.oldPos = new Vector2(x, y);
-                p.lerp = 1;
-                p.sizeLerp = 0;
-                p.willDie = false;
-                p.willUpgrade = false;
+                p.reset(id, val, x, y);
             }
             //board.get(BoardData).tiles.push(ent)
             engine.addEntity(ent);
@@ -633,6 +647,8 @@ define("src/game", ["require", "exports"], function (require, exports) {
                                         tileData.willDie = true;
                                         currentRow[target].get(TileData).willUpgrade = true;
                                         targetData.val *= 2;
+                                        // exit loop
+                                        tile = currentRow.length;
                                     }
                                     else {
                                         // exit loop
@@ -650,14 +666,14 @@ define("src/game", ["require", "exports"], function (require, exports) {
         addRandomGem();
         //}
     }
-    function moveGem(gem, newX, newY) {
-        var tileData = gem.getOrNull(TileData);
-        tileData.oldPos = tileData.pos;
-        tileData.nextPos = new Vector2(newX, newY);
-        tileData.lerp = 0;
-        log("moved tile: " + tileData.id);
-        //debugger
-    }
+    // function moveGem(gem: Entity, newX: number, newY: number) {
+    //   let tileData = gem.getOrNull(TileData)
+    //   tileData.oldPos = tileData.pos
+    //   tileData.nextPos = new Vector2(newX, newY)
+    //   tileData.lerp = 0
+    //   log("moved tile: " + tileData.id)
+    //     //debugger
+    // }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF
     // Board object
@@ -768,44 +784,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
     function loose() {
         log("YOU LOST");
     }
+    function win() {
+        log("YOU WON!");
+    }
 });
-// EventManager.on("moveTile", e => {
-//   let tile = gems.entities.filter(function (gem) {
-//     return gem.getOrNull(TileData).id == e.id;
-//   })[0];
-//   if (tile){
-//     let tileData = tile.getOrNull(TileData)
-//     tileData.oldPos = new Vector2(e.oldX, e.oldY)
-//     tileData.nextPos = new Vector2(e.newX, e.newY)
-//     tileData.lerp = 0
-//     log("moved tile: " + e.id)
-//     //debugger
-//   }
-//   else{
-//     log("moved unidentified tile, ID: " + e.id )
-//   }
-// })
-// EventManager.on("merge", e => {
-//   let oldGem = gems.entities.filter(function (gem) {
-//     return gem.getOrNull(TileData).id == e.oldId;
-// })[0];
-//   let targetGem = gems.entities.filter(function (gem) {
-//   return gem.getOrNull(TileData).id == e.targetId;
-// })[0];
-// if (oldGem && targetGem){
-//   engine.removeEntity(oldGem)
-//   let targetModelVal = targetGem.getOrNull(TileData).val * 2
-//   let shapeIndex = values.indexOf(targetModelVal)
-//   targetGem.set(gemModels[shapeIndex])
-// } else {
-//   log("merged unidentified tiles, old: " + e.oldID + " target: " + e.targetID )
-// }
-//   //debugger
-//   // sound
-// })
-// EventManager.on("win", e => {
-//  log("WIN!!")
-// })
-// EventManager.on("loose", e => {
-//   log("LOOSE!!")
-//  })

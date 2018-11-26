@@ -132,6 +132,7 @@ export class MoveTiles implements ISystem {
         log(data.oldPos.x)
       }
       else {
+        data.oldPos = data.pos
         if (data.willDie){
            engine.removeEntity(gem)
            for (let targetGem of gems.entities) {
@@ -298,6 +299,7 @@ function shiftBlocks(direction:Directions){
       break
     case Directions.LEFT:
       for (var row = 0; row < boardData.size; ++row) {
+        // Store what's in the row
         var currentRow: any[] = [null, null, null, null]
           for (let gem in gems.entities){
             let tilePos = gems.entities[gem].get(TileData).nextPos
@@ -305,48 +307,38 @@ function shiftBlocks(direction:Directions){
                 currentRow[tilePos.x] = gems.entities[gem]
             }
           }
+          
           for (var target = 0; target < boardData.size; ++target) {
-            if (currentRow[target] == null){
-              for (var tile = target + 1; tile < currentRow.length; ++tile){
-                if (currentRow[tile]){
-                  let tileData = currentRow[tile].get(TileData)
-                  tileData.nextPos.x --
-                  tileData.lerp = 0
-                  
+            
+            let alreadyMerged = false
+            for (var tile = target + 1; tile < currentRow.length; ++tile){
+              if (currentRow[tile]){
+                let gemData = currentRow[tile].get(TileData)
+                // if target tile is empty, shift gems
+                if (currentRow[target] == null || alreadyMerged == true){  
+                  gemData.nextPos.x --
+                  gemData.lerp = 0
                 }
-              }
-              //debugger
-            }
-            else {
-              let targetData = currentRow[target].get(TileData)
-              for (var tile = target + 1; tile < currentRow.length; ++tile){
-                if (currentRow[tile]){
-                  let tileData = currentRow[tile].get(TileData)
-                  if (tileData.val == targetData.val){
-                    
-                    //debugger
-                    tileData.nextPos.x --
-                    tileData.lerp = 0
-                    tileData.willDie = true
+                else { // if target tile has a gem, check if it can be merged
+                  let targetData = currentRow[target].get(TileData)
+                  if (gemData.val == targetData.val && alreadyMerged == false){
+                  //debugger
+                    gemData.nextPos.x --
+                    gemData.lerp = 0
+                    gemData.willDie = true
                     currentRow[target].get(TileData).willUpgrade = true
                     targetData.val *= 2
-                     // exit loop
-                     tile = currentRow.length
-                  }
-                  else {
-                    // exit loop
-                    tile = currentRow.length
+                    alreadyMerged = true
                   }
                 }
-
               }
-
+            }
           }
         }
+        break
       }
-      break
-    }
-    
+
+
  
 
   //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
@@ -508,3 +500,12 @@ function win(){
 
 
  
+
+// Bug where 2 2 4 0   ->   4 0 4 0
+// Movement in other directions
+// Check if no movement
+// Loose when no movement
+// Check for win
+// Sounds
+
+// Bug with opening chest

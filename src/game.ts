@@ -136,7 +136,6 @@ export class MoveTiles implements ISystem {
         }
         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp)
         transform.position = gridToScene(data.pos.x, data.pos.y)
-        log(data.oldPos.x)
       } else {
         data.oldPos = data.pos
         if (data.willDie) {
@@ -171,8 +170,7 @@ export class GrowTiles implements ISystem {
       let transform = gem.get(Transform)
       if (data.sizeLerp < 1) {
         data.sizeLerp += dt
-        transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp))
-        //log(transform.position)
+        transform.scale.setAll(Scalar.Lerp(0.05, 0.5, data.sizeLerp))
       }
     }
   }
@@ -287,7 +285,7 @@ function addRandomGem() {
     let index = emptyCells.indexOf(tilePos)
     emptyCells.splice(index, 1)
   }
-  //log(emptyCells)
+
   if (emptyCells.length == 0) {
     loose()
   }
@@ -304,7 +302,7 @@ function addRandomGem() {
 
 function shiftBlocks(direction: Directions) {
   var boardData = board.get(BoardData)
-
+  var hasChanged = false
   for (var row = 0; row < boardData.size; ++row) {
     // Store what's in the row (or column)
     var currentRow: any[] = [null, null, null, null]
@@ -346,6 +344,7 @@ function shiftBlocks(direction: Directions) {
           // if target tile is empty, shift gems
           if (currentRow[target] == null ||  alreadyMerged == true) {
             moveGem(gemData, direction)
+            hasChanged = true
           } else {
             // if target tile has a gem, check if it can be merged
             let targetData = currentRow[target].get(TileData)
@@ -353,12 +352,10 @@ function shiftBlocks(direction: Directions) {
                 targetData.willUpgrade == false && 
                 targetData.willDie == false &&
                 blocked == false) {
-              //debugger
               moveGem(gemData, direction)
-              gemData.willDie = true
-              targetData.willUpgrade = true
-              targetData.val *= 2
+              mergeGems(gemData, targetData)
               alreadyMerged = true
+              hasChanged = true
             }
           }
           blocked = true
@@ -367,12 +364,10 @@ function shiftBlocks(direction: Directions) {
     }
   }
 
-  //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
-  // if  (hasChanged() ){
-  addRandomGem()
-  //}
+  if (hasChanged){
+    addRandomGem()
+  }
 
-  // check if won
   // check if lost
 }
 
@@ -392,6 +387,16 @@ function moveGem(gemData: TileData, direction: Directions) {
       break
   }
   gemData.lerp = 0
+}
+
+function mergeGems(gemData: TileData, targetData: TileData){
+  gemData.willDie = true
+  targetData.willUpgrade = true
+  targetData.val *= 2
+  // Check if won
+  if (targetData.val == 2048){
+    win()
+  }
 }
 
 ///////////////////////////
@@ -436,6 +441,7 @@ chest.get(GLTFShape).addClip(chestClose)
 chest.set(
   new OnClick(e => {
     openChest()
+    addRandomGem()
   })
 )
 
@@ -527,11 +533,8 @@ function win() {
   log('YOU WON!')
 }
 
-// Bug where 2 2 4 0   ->   4 0 4 0
-// Movement in other directions
-// Check if no movement
+
 // Loose when no movement
-// Check for win
 // Sounds
 
 // Bug with opening chest

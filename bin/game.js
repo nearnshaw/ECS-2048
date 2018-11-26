@@ -444,7 +444,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
                         }
                         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp);
                         transform.position = gridToScene(data.pos.x, data.pos.y);
-                        log(data.oldPos.x);
                     }
                     else {
                         data.oldPos = data.pos;
@@ -500,8 +499,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
                     var transform = gem.get(Transform);
                     if (data.sizeLerp < 1) {
                         data.sizeLerp += dt;
-                        transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp));
-                        //log(transform.position)
+                        transform.scale.setAll(Scalar.Lerp(0.05, 0.5, data.sizeLerp));
                     }
                 }
             }
@@ -613,7 +611,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
             var index_1 = emptyCells.indexOf(tilePos);
             emptyCells.splice(index_1, 1);
         }
-        //log(emptyCells)
         if (emptyCells.length == 0) {
             loose();
         }
@@ -628,6 +625,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
     }
     function shiftBlocks(direction) {
         var boardData = board.get(BoardData);
+        var hasChanged = false;
         for (var row = 0; row < boardData.size; ++row) {
             // Store what's in the row (or column)
             var currentRow = [null, null, null, null];
@@ -668,6 +666,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
                         // if target tile is empty, shift gems
                         if (currentRow[target] == null || alreadyMerged == true) {
                             moveGem(gemData, direction);
+                            hasChanged = true;
                         }
                         else {
                             // if target tile has a gem, check if it can be merged
@@ -676,12 +675,10 @@ define("src/game", ["require", "exports"], function (require, exports) {
                                 targetData.willUpgrade == false &&
                                 targetData.willDie == false &&
                                 blocked == false) {
-                                //debugger
                                 moveGem(gemData, direction);
-                                gemData.willDie = true;
-                                targetData.willUpgrade = true;
-                                targetData.val *= 2;
+                                mergeGems(gemData, targetData);
                                 alreadyMerged = true;
+                                hasChanged = true;
                             }
                         }
                         blocked = true;
@@ -689,11 +686,9 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 }
             }
         }
-        //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
-        // if  (hasChanged() ){
-        addRandomGem();
-        //}
-        // check if won
+        if (hasChanged) {
+            addRandomGem();
+        }
         // check if lost
     }
     function moveGem(gemData, direction) {
@@ -712,6 +707,15 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 break;
         }
         gemData.lerp = 0;
+    }
+    function mergeGems(gemData, targetData) {
+        gemData.willDie = true;
+        targetData.willUpgrade = true;
+        targetData.val *= 2;
+        // Check if won
+        if (targetData.val == 2048) {
+            win();
+        }
     }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF
@@ -749,6 +753,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
     chest.get(GLTFShape).addClip(chestClose);
     chest.set(new OnClick(function (e) {
         openChest();
+        addRandomGem();
     }));
     engine.addEntity(chest);
     // Chest Light
@@ -827,10 +832,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
         log('YOU WON!');
     }
 });
-// Bug where 2 2 4 0   ->   4 0 4 0
-// Movement in other directions
-// Check if no movement
 // Loose when no movement
-// Check for win
 // Sounds
 // Bug with opening chest

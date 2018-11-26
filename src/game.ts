@@ -1,7 +1,6 @@
-
-import {Board} from 'src/board'
-import {EventManager} from 'ts/EventManager'
-import { playSound } from '@decentraland/SoundController';
+import { Board } from 'src/board'
+import { EventManager } from 'ts/EventManager'
+import { playSound } from '@decentraland/SoundController'
 
 const input = Input.instance
 
@@ -9,15 +8,14 @@ const camera = Camera.instance
 
 const values = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 
-
 export enum Directions {
-  LEFT = "left",
-  UP = "up",
-  RIGHT = "right",
-  DOWN = "down"
+  LEFT = 'left',
+  UP = 'up',
+  RIGHT = 'right',
+  DOWN = 'down'
 }
 
-let TileId: number = 0;
+let TileId: number = 0
 
 // CUSTOM COMPONENTS
 
@@ -41,16 +39,16 @@ export class SwipeDetection {
 
 @Component('tileData')
 export class TileData {
-  id:number
+  id: number
   val: number
-  pos: Vector2    //maybe not needed
+  pos: Vector2 //maybe not needed
   nextPos: Vector2
   oldPos: Vector2
   lerp: number
   sizeLerp: number
   willDie: boolean
   willUpgrade: boolean
-  constructor(id: number, val: number, x: number, y: number ){
+  constructor(id: number, val: number, x: number, y: number) {
     this.id = id
     this.val = val
     this.pos = new Vector2(x, y)
@@ -61,7 +59,7 @@ export class TileData {
     this.willDie = false
     this.willUpgrade = false
   }
-  reset(id: number, val: number, x: number, y: number ){
+  reset(id: number, val: number, x: number, y: number) {
     this.id = id
     this.val = val
     this.pos = new Vector2(x, y)
@@ -78,20 +76,17 @@ export class TileData {
 export class BoardData {
   //tiles: Entity[] = []
   //cells: Entity[][]
-  won : boolean
+  won: boolean
   size: number = 4
   fourProbability: number = 0.1
-  deltaX : number[] = [-1, 0, 1, 0]
+  deltaX: number[] = [-1, 0, 1, 0]
   deltaY: number[] = [0, -1, 0, 1]
 }
-
 
 ///////////////////////////
 // Entity groups
 
 const gems = engine.getComponentGroup(Transform, TileData)
-
-
 
 ///////////////////////////
 // Systems
@@ -99,23 +94,33 @@ const gems = engine.getComponentGroup(Transform, TileData)
 // Open Chest
 export class OpenBoard implements ISystem {
   update(dt: number) {
-      let transform = boardWrapper.get(Transform)
-      let state = boardWrapper.get(OpenLerp)
-      if (state.open == true && state.fraction < 1){
-        transform.position = Vector3.Lerp(state.closedPos, state.openPos, state.fraction)
-        transform.scale.setAll(Scalar.Lerp(state.closedScale, state.openScale, state.fraction))
-        state.fraction += 1/30
-      } 
-      else if (state.open == false && state.fraction > 0){
-        transform.position = Vector3.Lerp(state.closedPos, state.openPos, state.fraction)
-        transform.scale.setAll(Scalar.Lerp(state.closedScale, state.openScale, state.fraction))
-        state.fraction -= 1/30
-      }
+    let transform = boardWrapper.get(Transform)
+    let state = boardWrapper.get(OpenLerp)
+    if (state.open == true && state.fraction < 1) {
+      transform.position = Vector3.Lerp(
+        state.closedPos,
+        state.openPos,
+        state.fraction
+      )
+      transform.scale.setAll(
+        Scalar.Lerp(state.closedScale, state.openScale, state.fraction)
+      )
+      state.fraction += 1 / 30
+    } else if (state.open == false && state.fraction > 0) {
+      transform.position = Vector3.Lerp(
+        state.closedPos,
+        state.openPos,
+        state.fraction
+      )
+      transform.scale.setAll(
+        Scalar.Lerp(state.closedScale, state.openScale, state.fraction)
+      )
+      state.fraction -= 1 / 30
+    }
   }
 }
 
-
-engine.addSystem(new OpenBoard)
+engine.addSystem(new OpenBoard())
 
 // Move tiles
 
@@ -124,34 +129,38 @@ export class MoveTiles implements ISystem {
     for (let gem of gems.entities) {
       let data = gem.get(TileData)
       let transform = gem.get(Transform)
-      if (data.lerp < 1){
+      if (data.lerp < 1) {
         data.lerp += dt * 2
-        if (data.lerp > 1){data.lerp = 1}
+        if (data.lerp > 1) {
+          data.lerp = 1
+        }
         data.pos = Vector2.Lerp(data.oldPos, data.nextPos, data.lerp)
         transform.position = gridToScene(data.pos.x, data.pos.y)
         log(data.oldPos.x)
-      }
-      else {
+      } else {
         data.oldPos = data.pos
-        if (data.willDie){
-           engine.removeEntity(gem)
-           for (let targetGem of gems.entities) {
-              let targetData = targetGem.get(TileData)
-              if (targetData.pos.x == data.pos.x && targetData.pos.y == data.pos.y && targetData.willUpgrade){
-                let targetModelVal = targetData.val
-                let shapeIndex = values.indexOf(targetModelVal)
-                targetGem.set(gemModels[shapeIndex])
-                targetData.willUpgrade = false
-              }
-           }
-        } 
-        
+        if (data.willDie) {
+          engine.removeEntity(gem)
+          for (let targetGem of gems.entities) {
+            let targetData = targetGem.get(TileData)
+            if (
+              targetData.pos.x == data.pos.x &&
+              targetData.pos.y == data.pos.y &&
+              targetData.willUpgrade
+            ) {
+              let targetModelVal = targetData.val
+              let shapeIndex = values.indexOf(targetModelVal)
+              targetGem.set(gemModels[shapeIndex])
+              targetData.willUpgrade = false
+            }
+          }
+        }
       }
     }
   }
 }
 
-engine.addSystem(new MoveTiles)
+engine.addSystem(new MoveTiles())
 
 // Grow tiles
 
@@ -160,7 +169,7 @@ export class GrowTiles implements ISystem {
     for (let gem of gems.entities) {
       let data = gem.get(TileData)
       let transform = gem.get(Transform)
-      if (data.sizeLerp < 1){
+      if (data.sizeLerp < 1) {
         data.sizeLerp += dt
         transform.scale.setAll(Scalar.Lerp(0.1, 0.5, data.sizeLerp))
         //log(transform.position)
@@ -169,18 +178,16 @@ export class GrowTiles implements ISystem {
   }
 }
 
-engine.addSystem(new GrowTiles)
-
-
+engine.addSystem(new GrowTiles())
 
 //////////////////////////////
 // OTHER FUNCTIONS
 
-function openChest(){
+function openChest() {
   let state = boardWrapper.get(OpenLerp)
   state.open = !state.open
-  switch (state.open){
-    case true :
+  switch (state.open) {
+    case true:
       //board = new Board()
       chestOpen.play()
       chestLightOpen.play()
@@ -195,9 +202,6 @@ function openChest(){
       break
   }
 }
-
-
-
 
 // Create gems using object pool
 const spawner = {
@@ -252,110 +256,140 @@ const spawner = {
   }
 }
 
-
-function gridToScene(x: number, y: number){
-  let convertedPos = new Vector3(
-    (x + 1  ) - 2.5,
-    (-y + 1 ) + 0.5,
-    0
-  )
+function gridToScene(x: number, y: number) {
+  let convertedPos = new Vector3(x + 1 - 2.5, -y + 1 + 0.5, 0)
   return convertedPos
 }
 
-function addRandomGem(){
-  var emptyCells: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ,15]
+function addRandomGem() {
+  var emptyCells: number[] = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ]
   var boardData = board.get(BoardData)
-  for (let tile in gems.entities){
+  for (let tile in gems.entities) {
     let tileData = gems.entities[tile].get(TileData)
-    let tilePos = tileData.nextPos.x + (tileData.nextPos.y * 4)
+    let tilePos = tileData.nextPos.x + tileData.nextPos.y * 4
     let index = emptyCells.indexOf(tilePos)
     emptyCells.splice(index, 1)
   }
   //log(emptyCells)
-  if (emptyCells.length  == 0){
+  if (emptyCells.length == 0) {
     loose()
   }
 
-  var index = ~~(Math.random() * emptyCells.length);
-  var cell = emptyCells[index];
-  var newValue = Math.random() < boardData.fourProbability ? 4 : 2;
-  var cellY = Math.floor(cell/4)
+  var index = ~~(Math.random() * emptyCells.length)
+  var cell = emptyCells[index]
+  var newValue = Math.random() < boardData.fourProbability ? 4 : 2
+  var cellY = Math.floor(cell / 4)
   var cellX = cell % 4
   var id = TileId++
-  log("new cell added, pos: " + cell + "  "  + cellX + " & " + cellY)
-  spawner.spawnGem(id, newValue, cellX , cellY )
+  log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY)
+  spawner.spawnGem(id, newValue, cellX, cellY)
 }
 
-
-function shiftBlocks(direction:Directions){
+function shiftBlocks(direction: Directions) {
   var boardData = board.get(BoardData)
-  switch (direction){
-    case Directions.UP:
 
-      break
-    case Directions.RIGHT:
-      break
-    case Directions.DOWN:
-      break
-    case Directions.LEFT:
-      for (var row = 0; row < boardData.size; ++row) {
-        // Store what's in the row
-        var currentRow: any[] = [null, null, null, null]
-          for (let gem in gems.entities){
-            let tilePos = gems.entities[gem].get(TileData).nextPos
-            if (tilePos.y == row){
-                currentRow[tilePos.x] = gems.entities[gem]
+  for (var row = 0; row < boardData.size; ++row) {
+    // Store what's in the row (or column)
+    var currentRow: any[] = [null, null, null, null]
+    for (let gem in gems.entities) {
+      let tilePos = gems.entities[gem].get(TileData).nextPos
+      let pos :number
+      switch (direction){
+        case Directions.UP:
+          if (tilePos.x == row) {
+            pos = (tilePos.y * -1 ) + 3
+          }
+          break
+        case Directions.RIGHT:
+          if (tilePos.y == row) {
+            pos = (tilePos.x * -1 ) + 3
+          }
+          break
+        case Directions.DOWN:
+          if (tilePos.y == row) {
+            pos = tilePos.y
+          }
+          break
+        case Directions.LEFT:
+          if (tilePos.y == row) {
+           pos = tilePos.x
+          }
+          break
+      }  
+      currentRow[pos] = gems.entities[gem]
+    }
+    
+    // go over each tile in row (or column)
+    for (var target = 0; target < boardData.size; ++target) {
+      let alreadyMerged = false
+      let canMerge = true
+      for (var tile = target + 1; tile < currentRow.length; ++tile) {
+        if (currentRow[tile]) {
+          let gemData = currentRow[tile].get(TileData)
+          // if target tile is empty, shift gems
+          if (currentRow[target] == null || alreadyMerged == true) {
+            moveGem(gemData, direction)
+          } else {
+            // if target tile has a gem, check if it can be merged
+            let targetData = currentRow[target].get(TileData)
+            if (gemData.val == targetData.val && canMerge == true) {
+              //debugger
+              moveGem(gemData, direction)
+              gemData.willDie = true
+              currentRow[target].get(TileData).willUpgrade = true
+              targetData.val *= 2
+              alreadyMerged = true
             }
           }
-          
-          for (var target = 0; target < boardData.size; ++target) {
-            
-            let alreadyMerged = false
-            for (var tile = target + 1; tile < currentRow.length; ++tile){
-              if (currentRow[tile]){
-                let gemData = currentRow[tile].get(TileData)
-                // if target tile is empty, shift gems
-                if (currentRow[target] == null || alreadyMerged == true){  
-                  gemData.nextPos.x --
-                  gemData.lerp = 0
-                }
-                else { // if target tile has a gem, check if it can be merged
-                  let targetData = currentRow[target].get(TileData)
-                  if (gemData.val == targetData.val && alreadyMerged == false){
-                  //debugger
-                    gemData.nextPos.x --
-                    gemData.lerp = 0
-                    gemData.willDie = true
-                    currentRow[target].get(TileData).willUpgrade = true
-                    targetData.val *= 2
-                    alreadyMerged = true
-                  }
-                }
-              }
-            }
-          }
+          canMerge = false
         }
-        break
       }
-
-
- 
+    }
+  }
 
   //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
   // if  (hasChanged() ){
-    addRandomGem()
+  addRandomGem()
   //}
+
+  // check if won
+  // check if lost
 }
 
-// function moveGem(gem: Entity, newX: number, newY: number) {
-
-//   let tileData = gem.getOrNull(TileData)
-//   tileData.oldPos = tileData.pos
-//   tileData.nextPos = new Vector2(newX, newY)
-//   tileData.lerp = 0
-//   log("moved tile: " + tileData.id)
-//     //debugger
-// }
+function moveGem(gemData: TileData, direction: Directions) {
+  switch (direction) {
+    case Directions.UP:
+      gemData.nextPos.y++
+      break
+    case Directions.RIGHT:
+      gemData.nextPos.x++
+      break
+    case Directions.DOWN:
+      gemData.nextPos.y--
+      break
+    case Directions.LEFT:
+      gemData.nextPos.x--
+      break
+  }
+  gemData.lerp = 0
+}
 
 ///////////////////////////
 // INITIAL POSITIONS OF STUFF
@@ -365,10 +399,9 @@ function shiftBlocks(direction:Directions){
 const board = new Entity()
 board.set(new BoardData())
 
-
 // Island
 const island = new Entity()
-island.set(new GLTFShape("models/Island.gltf"))
+island.set(new GLTFShape('models/Island.gltf'))
 island.set(new Transform())
 island.get(Transform).position.set(5, 0, 5)
 island.get(Transform).rotation.setEuler(0, 90, 0)
@@ -376,7 +409,7 @@ engine.addEntity(island)
 
 // Banner
 const bannerImage = new BasicMaterial()
-bannerImage.texture = "textures/Logo2048.png"
+bannerImage.texture = 'textures/Logo2048.png'
 
 const banner = new Entity()
 banner.set(bannerImage)
@@ -386,21 +419,22 @@ banner.get(Transform).position.set(5, 9, 5)
 banner.get(Transform).scale.setAll(6)
 engine.addEntity(banner)
 
-
 // Chest
 const chest = new Entity()
 chest.set(new Transform())
 chest.get(Transform).position.set(5, 0.2, 5)
 chest.get(Transform).rotation.setEuler(0, 90, 0)
 chest.get(Transform).scale.setAll(0.8)
-chest.set(new GLTFShape("models/Chest.gltf"))
-const chestOpen = new AnimationClip("Open",{loop:false})
-const chestClose = new AnimationClip("Close",{loop:false})
+chest.set(new GLTFShape('models/Chest.gltf'))
+const chestOpen = new AnimationClip('Open', { loop: false })
+const chestClose = new AnimationClip('Close', { loop: false })
 chest.get(GLTFShape).addClip(chestOpen)
 chest.get(GLTFShape).addClip(chestClose)
-chest.set(new OnClick( e => {
-  openChest()
-}))
+chest.set(
+  new OnClick(e => {
+    openChest()
+  })
+)
 
 engine.addEntity(chest)
 
@@ -408,9 +442,9 @@ engine.addEntity(chest)
 const chestLight = new Entity()
 chestLight.set(new Transform())
 chestLight.setParent(chest)
-chestLight.set(new GLTFShape("models/Light.gltf"))
-const chestLightOpen = new AnimationClip("Light_Open",{loop:false})
-const chestLightClose = new AnimationClip("Light_Close",{loop:false})
+chestLight.set(new GLTFShape('models/Light.gltf'))
+const chestLightOpen = new AnimationClip('Light_Open', { loop: false })
+const chestLightClose = new AnimationClip('Light_Close', { loop: false })
 chestLight.get(GLTFShape).addClip(chestLightOpen)
 chestLight.get(GLTFShape).addClip(chestLightClose)
 engine.addEntity(chestLight)
@@ -431,75 +465,64 @@ map.setParent(boardWrapper)
 map.set(new Transform())
 map.get(Transform).position.set(0, 1, 0)
 map.get(Transform).scale.setAll(2)
-map.set(new GLTFShape("models/Map.gltf"))
+map.set(new GLTFShape('models/Map.gltf'))
 engine.addEntity(map)
-
 
 // Swipe detector singleton
 
 let swipeChecker = new Entity()
-swipeChecker.set(new SwipeDetection)
-
+swipeChecker.set(new SwipeDetection())
 
 // 3D models for gems
 
 let gemModels = []
 
 let gemVal = 2
-for (let i = 0 ; i < values.length; i++){
-  let gemMod = new GLTFShape("models/" + gemVal + ".gltf")
+for (let i = 0; i < values.length; i++) {
+  let gemMod = new GLTFShape('models/' + gemVal + '.gltf')
   gemModels.push(gemMod)
   gemVal *= 2
 }
 
-
-
 ///////////////////////////////
 // Event based functions
 
-
-
 // Swipe detection
 
-input.subscribe("BUTTON_A_DOWN", e => {
-  
+input.subscribe('BUTTON_A_DOWN', e => {
   let swipes = swipeChecker.get(SwipeDetection)
   swipes.buttonPressed = true
   swipes.posOnDown = camera.rotation.eulerAngles
 })
 
 // button up event
-input.subscribe("BUTTON_A_UP", e => { 
+input.subscribe('BUTTON_A_UP', e => {
   let swipes = swipeChecker.get(SwipeDetection)
   swipes.buttonPressed = false
   swipes.posOnUp = camera.rotation.eulerAngles
-  let deltaX : number = swipes.posOnDown.x - swipes.posOnUp.x
-  let deltaY : number = swipes.posOnDown.y - swipes.posOnUp.y
+  let deltaX: number = swipes.posOnDown.x - swipes.posOnUp.x
+  let deltaY: number = swipes.posOnDown.y - swipes.posOnUp.y
   let direction: Directions
-  if(  Math.abs(deltaY) < 3 && deltaX < -5){
-    direction = Directions.DOWN
-  } else if (deltaY > 5 && Math.abs(deltaX) < 3){
-    direction = Directions.RIGHT
-  } else if (  Math.abs(deltaY) < 3 && deltaX > 5){
+  if (Math.abs(deltaY) < 3 && deltaX < -5) {
     direction = Directions.UP
-  } else if (deltaY < -5 && Math.abs(deltaX) < 3){
+  } else if (deltaY > 5 && Math.abs(deltaX) < 3) {
+    direction = Directions.RIGHT
+  } else if (Math.abs(deltaY) < 3 && deltaX > 5) {
+    direction = Directions.DOWN
+  } else if (deltaY < -5 && Math.abs(deltaX) < 3) {
     direction = Directions.LEFT
   }
-  log("direction " + direction)
+  log('direction ' + direction)
   shiftBlocks(direction)
 })
 
-
-function loose(){
-  log("YOU LOST")
+function loose() {
+  log('YOU LOST')
 }
 
-function win(){
-  log("YOU WON!")
+function win() {
+  log('YOU WON!')
 }
-
-
- 
 
 // Bug where 2 2 4 0   ->   4 0 4 0
 // Movement in other directions

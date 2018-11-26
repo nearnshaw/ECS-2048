@@ -425,7 +425,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         return OpenBoard;
     }());
     exports.OpenBoard = OpenBoard;
-    engine.addSystem(new OpenBoard);
+    engine.addSystem(new OpenBoard());
     // Move tiles
     var MoveTiles = /** @class */ (function () {
         function MoveTiles() {
@@ -454,7 +454,9 @@ define("src/game", ["require", "exports"], function (require, exports) {
                                 for (var _e = __values(gems.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
                                     var targetGem = _f.value;
                                     var targetData = targetGem.get(TileData);
-                                    if (targetData.pos.x == data.pos.x && targetData.pos.y == data.pos.y && targetData.willUpgrade) {
+                                    if (targetData.pos.x == data.pos.x &&
+                                        targetData.pos.y == data.pos.y &&
+                                        targetData.willUpgrade) {
                                         var targetModelVal = targetData.val;
                                         var shapeIndex = values.indexOf(targetModelVal);
                                         targetGem.set(gemModels[shapeIndex]);
@@ -484,7 +486,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         return MoveTiles;
     }());
     exports.MoveTiles = MoveTiles;
-    engine.addSystem(new MoveTiles);
+    engine.addSystem(new MoveTiles());
     // Grow tiles
     var GrowTiles = /** @class */ (function () {
         function GrowTiles() {
@@ -514,7 +516,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         return GrowTiles;
     }());
     exports.GrowTiles = GrowTiles;
-    engine.addSystem(new GrowTiles);
+    engine.addSystem(new GrowTiles());
     //////////////////////////////
     // OTHER FUNCTIONS
     function openChest() {
@@ -582,15 +584,32 @@ define("src/game", ["require", "exports"], function (require, exports) {
         }
     };
     function gridToScene(x, y) {
-        var convertedPos = new Vector3((x + 1) - 2.5, (-y + 1) + 0.5, 0);
+        var convertedPos = new Vector3(x + 1 - 2.5, -y + 1 + 0.5, 0);
         return convertedPos;
     }
     function addRandomGem() {
-        var emptyCells = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        var emptyCells = [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+        ];
         var boardData = board.get(BoardData);
         for (var tile in gems.entities) {
             var tileData = gems.entities[tile].get(TileData);
-            var tilePos = tileData.nextPos.x + (tileData.nextPos.y * 4);
+            var tilePos = tileData.nextPos.x + tileData.nextPos.y * 4;
             var index_1 = emptyCells.indexOf(tilePos);
             emptyCells.splice(index_1, 1);
         }
@@ -604,69 +623,93 @@ define("src/game", ["require", "exports"], function (require, exports) {
         var cellY = Math.floor(cell / 4);
         var cellX = cell % 4;
         var id = TileId++;
-        log("new cell added, pos: " + cell + "  " + cellX + " & " + cellY);
+        log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY);
         spawner.spawnGem(id, newValue, cellX, cellY);
     }
     function shiftBlocks(direction) {
         var boardData = board.get(BoardData);
-        switch (direction) {
-            case Directions.UP:
-                break;
-            case Directions.RIGHT:
-                break;
-            case Directions.DOWN:
-                break;
-            case Directions.LEFT:
-                for (var row = 0; row < boardData.size; ++row) {
-                    // Store what's in the row
-                    var currentRow = [null, null, null, null];
-                    for (var gem in gems.entities) {
-                        var tilePos = gems.entities[gem].get(TileData).nextPos;
-                        if (tilePos.y == row) {
-                            currentRow[tilePos.x] = gems.entities[gem];
+        for (var row = 0; row < boardData.size; ++row) {
+            // Store what's in the row (or column)
+            var currentRow = [null, null, null, null];
+            for (var gem in gems.entities) {
+                var tilePos = gems.entities[gem].get(TileData).nextPos;
+                var pos = void 0;
+                switch (direction) {
+                    case Directions.UP:
+                        if (tilePos.x == row) {
+                            pos = (tilePos.y * -1) + 3;
                         }
-                    }
-                    for (var target = 0; target < boardData.size; ++target) {
-                        var alreadyMerged = false;
-                        for (var tile = target + 1; tile < currentRow.length; ++tile) {
-                            if (currentRow[tile]) {
-                                var gemData = currentRow[tile].get(TileData);
-                                // if target tile is empty, shift gems
-                                if (currentRow[target] == null || alreadyMerged == true) {
-                                    gemData.nextPos.x--;
-                                    gemData.lerp = 0;
-                                }
-                                else { // if target tile has a gem, check if it can be merged
-                                    var targetData = currentRow[target].get(TileData);
-                                    if (gemData.val == targetData.val && alreadyMerged == false) {
-                                        //debugger
-                                        gemData.nextPos.x--;
-                                        gemData.lerp = 0;
-                                        gemData.willDie = true;
-                                        currentRow[target].get(TileData).willUpgrade = true;
-                                        targetData.val *= 2;
-                                        alreadyMerged = true;
-                                    }
-                                }
+                        break;
+                    case Directions.RIGHT:
+                        if (tilePos.y == row) {
+                            pos = (tilePos.x * -1) + 3;
+                        }
+                        break;
+                    case Directions.DOWN:
+                        if (tilePos.y == row) {
+                            pos = tilePos.y;
+                        }
+                        break;
+                    case Directions.LEFT:
+                        if (tilePos.y == row) {
+                            pos = tilePos.x;
+                        }
+                        break;
+                }
+                currentRow[pos] = gems.entities[gem];
+            }
+            // go over each tile in row (or column)
+            for (var target = 0; target < boardData.size; ++target) {
+                var alreadyMerged = false;
+                var canMerge = true;
+                for (var tile = target + 1; tile < currentRow.length; ++tile) {
+                    if (currentRow[tile]) {
+                        var gemData = currentRow[tile].get(TileData);
+                        // if target tile is empty, shift gems
+                        if (currentRow[target] == null || alreadyMerged == true) {
+                            moveGem(gemData, direction);
+                        }
+                        else {
+                            // if target tile has a gem, check if it can be merged
+                            var targetData = currentRow[target].get(TileData);
+                            if (gemData.val == targetData.val && canMerge == true) {
+                                //debugger
+                                moveGem(gemData, direction);
+                                gemData.willDie = true;
+                                currentRow[target].get(TileData).willUpgrade = true;
+                                targetData.val *= 2;
+                                alreadyMerged = true;
                             }
                         }
+                        canMerge = false;
                     }
                 }
-                break;
+            }
         }
         //   hasChanged = (targetTile.value != this.cells[row][target].value ? true: hasChanged);
         // if  (hasChanged() ){
         addRandomGem();
         //}
+        // check if won
+        // check if lost
     }
-    // function moveGem(gem: Entity, newX: number, newY: number) {
-    //   let tileData = gem.getOrNull(TileData)
-    //   tileData.oldPos = tileData.pos
-    //   tileData.nextPos = new Vector2(newX, newY)
-    //   tileData.lerp = 0
-    //   log("moved tile: " + tileData.id)
-    //     //debugger
-    // }
+    function moveGem(gemData, direction) {
+        switch (direction) {
+            case Directions.UP:
+                gemData.nextPos.y++;
+                break;
+            case Directions.RIGHT:
+                gemData.nextPos.x++;
+                break;
+            case Directions.DOWN:
+                gemData.nextPos.y--;
+                break;
+            case Directions.LEFT:
+                gemData.nextPos.x--;
+                break;
+        }
+        gemData.lerp = 0;
+    }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF
     // Board object
@@ -675,14 +718,14 @@ define("src/game", ["require", "exports"], function (require, exports) {
     board.set(new BoardData());
     // Island
     var island = new Entity();
-    island.set(new GLTFShape("models/Island.gltf"));
+    island.set(new GLTFShape('models/Island.gltf'));
     island.set(new Transform());
     island.get(Transform).position.set(5, 0, 5);
     island.get(Transform).rotation.setEuler(0, 90, 0);
     engine.addEntity(island);
     // Banner
     var bannerImage = new BasicMaterial();
-    bannerImage.texture = "textures/Logo2048.png";
+    bannerImage.texture = 'textures/Logo2048.png';
     var banner = new Entity();
     banner.set(bannerImage);
     banner.set(new PlaneShape());
@@ -696,9 +739,9 @@ define("src/game", ["require", "exports"], function (require, exports) {
     chest.get(Transform).position.set(5, 0.2, 5);
     chest.get(Transform).rotation.setEuler(0, 90, 0);
     chest.get(Transform).scale.setAll(0.8);
-    chest.set(new GLTFShape("models/Chest.gltf"));
-    var chestOpen = new AnimationClip("Open", { loop: false });
-    var chestClose = new AnimationClip("Close", { loop: false });
+    chest.set(new GLTFShape('models/Chest.gltf'));
+    var chestOpen = new AnimationClip('Open', { loop: false });
+    var chestClose = new AnimationClip('Close', { loop: false });
     chest.get(GLTFShape).addClip(chestOpen);
     chest.get(GLTFShape).addClip(chestClose);
     chest.set(new OnClick(function (e) {
@@ -709,9 +752,9 @@ define("src/game", ["require", "exports"], function (require, exports) {
     var chestLight = new Entity();
     chestLight.set(new Transform());
     chestLight.setParent(chest);
-    chestLight.set(new GLTFShape("models/Light.gltf"));
-    var chestLightOpen = new AnimationClip("Light_Open", { loop: false });
-    var chestLightClose = new AnimationClip("Light_Close", { loop: false });
+    chestLight.set(new GLTFShape('models/Light.gltf'));
+    var chestLightOpen = new AnimationClip('Light_Open', { loop: false });
+    var chestLightClose = new AnimationClip('Light_Close', { loop: false });
     chestLight.get(GLTFShape).addClip(chestLightOpen);
     chestLight.get(GLTFShape).addClip(chestLightClose);
     engine.addEntity(chestLight);
@@ -730,29 +773,29 @@ define("src/game", ["require", "exports"], function (require, exports) {
     map.set(new Transform());
     map.get(Transform).position.set(0, 1, 0);
     map.get(Transform).scale.setAll(2);
-    map.set(new GLTFShape("models/Map.gltf"));
+    map.set(new GLTFShape('models/Map.gltf'));
     engine.addEntity(map);
     // Swipe detector singleton
     var swipeChecker = new Entity();
-    swipeChecker.set(new SwipeDetection);
+    swipeChecker.set(new SwipeDetection());
     // 3D models for gems
     var gemModels = [];
     var gemVal = 2;
     for (var i = 0; i < values.length; i++) {
-        var gemMod = new GLTFShape("models/" + gemVal + ".gltf");
+        var gemMod = new GLTFShape('models/' + gemVal + '.gltf');
         gemModels.push(gemMod);
         gemVal *= 2;
     }
     ///////////////////////////////
     // Event based functions
     // Swipe detection
-    input.subscribe("BUTTON_A_DOWN", function (e) {
+    input.subscribe('BUTTON_A_DOWN', function (e) {
         var swipes = swipeChecker.get(SwipeDetection);
         swipes.buttonPressed = true;
         swipes.posOnDown = camera.rotation.eulerAngles;
     });
     // button up event
-    input.subscribe("BUTTON_A_UP", function (e) {
+    input.subscribe('BUTTON_A_UP', function (e) {
         var swipes = swipeChecker.get(SwipeDetection);
         swipes.buttonPressed = false;
         swipes.posOnUp = camera.rotation.eulerAngles;
@@ -760,25 +803,25 @@ define("src/game", ["require", "exports"], function (require, exports) {
         var deltaY = swipes.posOnDown.y - swipes.posOnUp.y;
         var direction;
         if (Math.abs(deltaY) < 3 && deltaX < -5) {
-            direction = Directions.DOWN;
+            direction = Directions.UP;
         }
         else if (deltaY > 5 && Math.abs(deltaX) < 3) {
             direction = Directions.RIGHT;
         }
         else if (Math.abs(deltaY) < 3 && deltaX > 5) {
-            direction = Directions.UP;
+            direction = Directions.DOWN;
         }
         else if (deltaY < -5 && Math.abs(deltaX) < 3) {
             direction = Directions.LEFT;
         }
-        log("direction " + direction);
+        log('direction ' + direction);
         shiftBlocks(direction);
     });
     function loose() {
-        log("YOU LOST");
+        log('YOU LOST');
     }
     function win() {
-        log("YOU WON!");
+        log('YOU WON!');
     }
 });
 // Bug where 2 2 4 0   ->   4 0 4 0

@@ -646,7 +646,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
                         }
                         break;
                     case Directions.DOWN:
-                        if (tilePos.y == row) {
+                        if (tilePos.x == row) {
                             pos = tilePos.y;
                         }
                         break;
@@ -661,7 +661,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
             // go over each tile in row (or column)
             for (var target = 0; target < boardData.size; ++target) {
                 var alreadyMerged = false;
-                var canMerge = true;
+                var blocked = false;
                 for (var tile = target + 1; tile < currentRow.length; ++tile) {
                     if (currentRow[tile]) {
                         var gemData = currentRow[tile].get(TileData);
@@ -672,16 +672,19 @@ define("src/game", ["require", "exports"], function (require, exports) {
                         else {
                             // if target tile has a gem, check if it can be merged
                             var targetData = currentRow[target].get(TileData);
-                            if (gemData.val == targetData.val && canMerge == true) {
+                            if (gemData.val == targetData.val &&
+                                targetData.willUpgrade == false &&
+                                targetData.willDie == false &&
+                                blocked == false) {
                                 //debugger
                                 moveGem(gemData, direction);
                                 gemData.willDie = true;
-                                currentRow[target].get(TileData).willUpgrade = true;
+                                targetData.willUpgrade = true;
                                 targetData.val *= 2;
                                 alreadyMerged = true;
                             }
                         }
-                        canMerge = false;
+                        blocked = true;
                     }
                 }
             }

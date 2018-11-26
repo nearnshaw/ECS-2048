@@ -323,7 +323,7 @@ function shiftBlocks(direction: Directions) {
           }
           break
         case Directions.DOWN:
-          if (tilePos.y == row) {
+          if (tilePos.x == row) {
             pos = tilePos.y
           }
           break
@@ -339,26 +339,29 @@ function shiftBlocks(direction: Directions) {
     // go over each tile in row (or column)
     for (var target = 0; target < boardData.size; ++target) {
       let alreadyMerged = false
-      let canMerge = true
+      let blocked = false
       for (var tile = target + 1; tile < currentRow.length; ++tile) {
         if (currentRow[tile]) {
           let gemData = currentRow[tile].get(TileData)
           // if target tile is empty, shift gems
-          if (currentRow[target] == null || alreadyMerged == true) {
+          if (currentRow[target] == null ||  alreadyMerged == true) {
             moveGem(gemData, direction)
           } else {
             // if target tile has a gem, check if it can be merged
             let targetData = currentRow[target].get(TileData)
-            if (gemData.val == targetData.val && canMerge == true) {
+            if (gemData.val == targetData.val && 
+                targetData.willUpgrade == false && 
+                targetData.willDie == false &&
+                blocked == false) {
               //debugger
               moveGem(gemData, direction)
               gemData.willDie = true
-              currentRow[target].get(TileData).willUpgrade = true
+              targetData.willUpgrade = true
               targetData.val *= 2
               alreadyMerged = true
             }
           }
-          canMerge = false
+          blocked = true
         }
       }
     }

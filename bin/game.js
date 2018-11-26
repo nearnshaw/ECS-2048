@@ -611,17 +611,16 @@ define("src/game", ["require", "exports"], function (require, exports) {
             var index_1 = emptyCells.indexOf(tilePos);
             emptyCells.splice(index_1, 1);
         }
-        if (emptyCells.length == 0) {
-            loose();
+        if (emptyCells.length > 0) {
+            var index = ~~(Math.random() * emptyCells.length);
+            var cell = emptyCells[index];
+            var newValue = Math.random() < boardData.fourProbability ? 4 : 2;
+            var cellY = Math.floor(cell / 4);
+            var cellX = cell % 4;
+            var id = TileId++;
+            log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY);
+            spawner.spawnGem(id, newValue, cellX, cellY);
         }
-        var index = ~~(Math.random() * emptyCells.length);
-        var cell = emptyCells[index];
-        var newValue = Math.random() < boardData.fourProbability ? 4 : 2;
-        var cellY = Math.floor(cell / 4);
-        var cellX = cell % 4;
-        var id = TileId++;
-        log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY);
-        spawner.spawnGem(id, newValue, cellX, cellY);
     }
     function shiftBlocks(direction) {
         var boardData = board.get(BoardData);
@@ -688,6 +687,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
         }
         if (hasChanged) {
             addRandomGem();
+            hasLost();
         }
         // check if lost
     }
@@ -715,6 +715,36 @@ define("src/game", ["require", "exports"], function (require, exports) {
         // Check if won
         if (targetData.val == 2048) {
             win();
+        }
+    }
+    function hasLost() {
+        // check if board is full
+        if (gems.entities.length < 16) {
+            return;
+        }
+        var canMove = false;
+        var boardData = board.get(BoardData);
+        var fullBoard = [[null, null, null, null], [null, null, null, null], [null, null, null, null], [null, null, null, null]];
+        for (var gem in gems.entities) {
+            var gemData = gems.entities[gem].get(TileData);
+            if (!gemData.willDie) {
+                fullBoard[gemData.nextPos.y][gemData.nextPos.x] = gemData.val;
+            }
+        }
+        log(fullBoard);
+        for (var r = 0; r < boardData.size; ++r) {
+            for (var c = 0; c < boardData.size; ++c) {
+                canMove = fullBoard[r][c] == null ? true : canMove;
+                if (r < 3) {
+                    canMove = fullBoard[r][c] == fullBoard[r + 1][c] ? true : canMove;
+                }
+                if (c < 3) {
+                    canMove = fullBoard[r][c] == fullBoard[r][c + 1] ? true : canMove;
+                }
+            }
+        }
+        if (canMove == false) {
+            loose();
         }
     }
     ///////////////////////////

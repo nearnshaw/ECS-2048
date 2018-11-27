@@ -1,5 +1,3 @@
-import { Board } from 'src/board'
-import { EventManager } from 'ts/EventManager'
 import { playSound } from '@decentraland/SoundController'
 
 const input = Input.instance

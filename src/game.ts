@@ -74,9 +74,8 @@ export class TileData {
 
 @Component('boardData')
 export class BoardData {
-  //tiles: Entity[] = []
-  //cells: Entity[][]
   won: boolean
+  lost: boolean
   size: number = 4
   fourProbability: number = 0.1
   deltaX: number[] = [-1, 0, 1, 0]
@@ -190,8 +189,7 @@ function openChest() {
       chestOpen.play()
       chestLightOpen.play()
       // play sounds
-
-      //spawner.spawnGem("2", 4, 4)
+      addRandomGem()
       break
     case false:
       chestClose.play()
@@ -475,7 +473,6 @@ chest.get(GLTFShape).addClip(chestClose)
 chest.set(
   new OnClick(e => {
     openChest()
-    addRandomGem()
   })
 )
 

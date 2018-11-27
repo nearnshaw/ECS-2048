@@ -526,7 +526,7 @@ define("src/game", ["require", "exports"], function (require, exports) {
                 chestOpen.play();
                 chestLightOpen.play();
                 // play sounds
-                //spawner.spawnGem("2", 4, 4)
+                addRandomGem();
                 break;
             case false:
                 chestClose.play();
@@ -783,7 +783,6 @@ define("src/game", ["require", "exports"], function (require, exports) {
     chest.get(GLTFShape).addClip(chestClose);
     chest.set(new OnClick(function (e) {
         openChest();
-        addRandomGem();
     }));
     engine.addEntity(chest);
     // Chest Light

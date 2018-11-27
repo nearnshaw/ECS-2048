@@ -46,7 +46,7 @@ export class TileData {
   sizeLerp: number
   willDie: boolean
   willUpgrade: boolean
-  constructor(id: number, val: number, x: number, y: number) {
+  constructor(id?: number, val?: number, x?: number, y?: number) {
     this.id = id
     this.val = val
     this.pos = new Vector2(x, y)
@@ -227,25 +227,13 @@ const spawner = {
     let shapeIndex = values.indexOf(val)
     ent.set(gemModels[shapeIndex])
 
-    if (!ent.getOrNull(Transform)) {
-      const t = new Transform()
-      ent.set(t)
-      t.scale.setAll(0.5)
-      t.position = gridToScene(x, y)
-    } else {
-      const t = ent.get(Transform)
-      t.position = gridToScene(x, y)
-    }
+    let t = ent.getOrCreate(Transform)
+    t.scale.setAll(0.5)
+    t.position = gridToScene(x, y)
 
-    if (!ent.getOrNull(TileData)) {
-      const p = new TileData(id, val, x, y)
-      ent.set(p)
-    } else {
-      const p = ent.get(TileData)
-      p.reset(id, val, x, y)
-    }
+    let td = ent.getOrCreate(TileData)
+    td.reset(id, val, x, y)
 
-    //board.get(BoardData).tiles.push(ent)
     engine.addEntity(ent)
   }
 }
@@ -563,7 +551,9 @@ function win() {
 }
 
 
-// Loose when no movement
-// Sounds
+// MISSING:
 
+// Sounds
 // Bug with opening chest
+// Tutorial
+// Sprite clouds when merging

@@ -266,25 +266,11 @@ define("game", ["require", "exports"], function (require, exports) {
                 return;
             var shapeIndex = values.indexOf(val);
             ent.set(gemModels[shapeIndex]);
-            if (!ent.getOrNull(Transform)) {
-                var t = new Transform();
-                ent.set(t);
-                t.scale.setAll(0.5);
-                t.position = gridToScene(x, y);
-            }
-            else {
-                var t = ent.get(Transform);
-                t.position = gridToScene(x, y);
-            }
-            if (!ent.getOrNull(TileData)) {
-                var p = new TileData(id, val, x, y);
-                ent.set(p);
-            }
-            else {
-                var p = ent.get(TileData);
-                p.reset(id, val, x, y);
-            }
-            //board.get(BoardData).tiles.push(ent)
+            var t = ent.getOrCreate(Transform);
+            t.scale.setAll(0.5);
+            t.position = gridToScene(x, y);
+            var td = ent.getOrCreate(TileData);
+            td.reset(id, val, x, y);
             engine.addEntity(ent);
         }
     };
@@ -568,6 +554,8 @@ define("game", ["require", "exports"], function (require, exports) {
         log('YOU WON!');
     }
 });
-// Loose when no movement
+// MISSING:
 // Sounds
 // Bug with opening chest
+// Tutorial
+// Sprite clouds when merging

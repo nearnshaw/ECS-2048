@@ -20,7 +20,7 @@ let TileId: number = 0
 @Component('openLerp')
 export class OpenLerp {
   closedPos: Vector3 = new Vector3(5, 0, 5)
-  openPos: Vector3 = new Vector3(5, 5.5, 5)
+  openPos: Vector3 = new Vector3(5, 4.5, 5)
   closedScale: number = 0.05
   openScale: number = 0.45
   fraction: number = 0
@@ -421,7 +421,6 @@ function hasLost(){
 // INITIAL POSITIONS OF STUFF
 
 // Board object
-//let board = new Board()
 const board = new Entity()
 board.set(new BoardData())
 
@@ -441,7 +440,7 @@ const banner = new Entity()
 banner.set(bannerImage)
 banner.set(new PlaneShape())
 banner.set(new Transform())
-banner.get(Transform).position.set(5, 9, 5)
+banner.get(Transform).position.set(5, 8, 5)
 banner.get(Transform).scale.setAll(6)
 engine.addEntity(banner)
 
@@ -481,8 +480,6 @@ boardWrapper.set(new Transform())
 boardWrapper.get(Transform).position.set(5, 0, 5)
 boardWrapper.get(Transform).scale.setAll(0.05)
 boardWrapper.set(new OpenLerp())
-//board.set(new OpenLerp(new Vector3(5, 5.5, 5), new Vector3(5, 0, 5), 0))
-// board.set(new SizeLerp(0.05, 0.45, 0))
 engine.addEntity(boardWrapper)
 
 // Map

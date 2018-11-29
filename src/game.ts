@@ -23,7 +23,6 @@ export class OpenLerp {
   openScale: number = 0.45
   fraction: number = 0
   open: boolean = false
-  tutorialDone: boolean = false
 }
 
 @Component('swipeDetection')
@@ -74,6 +73,7 @@ export class BoardData {
   fourProbability: number = 0.1
   deltaX: number[] = [-1, 0, 1, 0]
   deltaY: number[] = [0, -1, 0, 1]
+  tutorialDone: boolean = false
 }
 
 ///////////////////////////
@@ -182,12 +182,11 @@ function openChest() {
       chestOpen.play()
       chestLightOpen.play()
       // play sounds
-      if (state.tutorialDone){
-        // reset board
+      if (board.get(BoardData).tutorialDone){
+        clearGems()
         addRandomGem()
       }
       else{
-        state.tutorialDone = true
         doTutorial()
       }
       
@@ -348,7 +347,7 @@ function shiftBlocks(direction: Directions) {
     }
   }
 
-  if (hasChanged){
+  if (hasChanged && boardData.tutorialDone){
     addRandomGem()
     hasLost()
   }
@@ -424,10 +423,13 @@ function hasLost(){
 function doTutorial(){
   let explan = new Entity()
   explan.setParent(boardWrapper)
-  explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. Merge tiles until you reach the highest value!"))
-  explan.get(TextShape).fontSize = 20
+  explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. \nMerge tiles until you reach the highest value!"))
+  explan.get(TextShape).fontSize = 25
+  explan.get(TextShape).shadowColor = Color3.Gray()
+  explan.get(TextShape).shadowOffsetY = 1
+  explan.get(TextShape).shadowOffsetX = -1
   explan.set(new Transform())
-  explan.get(Transform).position.set(0, 1, -1)
+  explan.get(Transform).position.set(0, 3, -1)
   explan.get(Transform).scale.set(8, 8, 1)
   engine.addEntity(explan)
 
@@ -443,6 +445,8 @@ function doTutorial(){
   button.set(new OnClick(e => {
     engine.removeEntity(button)
     engine.removeEntity(explan)
+    board.get(BoardData).tutorialDone = true
+    clearGems()
     addRandomGem()
   }))
 
@@ -453,7 +457,15 @@ function doTutorial(){
   buttonText.set(new TextShape("Let's start!"))
   engine.addEntity(buttonText)
 
+  spawner.spawnGem(2, 1, 2)
+  spawner.spawnGem(2, 3, 2)
 
+}
+
+function clearGems(){
+  for (const gem of gems.entities){
+    engine.removeEntity(gem)
+  }
 }
 
 ///////////////////////////

@@ -44,7 +44,6 @@ define("game", ["require", "exports"], function (require, exports) {
             this.openScale = 0.45;
             this.fraction = 0;
             this.open = false;
-            this.tutorialDone = false;
         }
         OpenLerp = __decorate([
             Component('openLerp')
@@ -97,6 +96,7 @@ define("game", ["require", "exports"], function (require, exports) {
             this.fourProbability = 0.1;
             this.deltaX = [-1, 0, 1, 0];
             this.deltaY = [0, -1, 0, 1];
+            this.tutorialDone = false;
         }
         BoardData = __decorate([
             Component('boardData')
@@ -230,12 +230,11 @@ define("game", ["require", "exports"], function (require, exports) {
                 chestOpen.play();
                 chestLightOpen.play();
                 // play sounds
-                if (state.tutorialDone) {
-                    // reset board
+                if (board.get(BoardData).tutorialDone) {
+                    clearGems();
                     addRandomGem();
                 }
                 else {
-                    state.tutorialDone = true;
                     doTutorial();
                 }
                 break;
@@ -381,7 +380,7 @@ define("game", ["require", "exports"], function (require, exports) {
                 }
             }
         }
-        if (hasChanged) {
+        if (hasChanged && boardData.tutorialDone) {
             addRandomGem();
             hasLost();
         }
@@ -446,10 +445,13 @@ define("game", ["require", "exports"], function (require, exports) {
     function doTutorial() {
         var explan = new Entity();
         explan.setParent(boardWrapper);
-        explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. Merge tiles until you reach the highest value!"));
-        explan.get(TextShape).fontSize = 20;
+        explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. \nMerge tiles until you reach the highest value!"));
+        explan.get(TextShape).fontSize = 25;
+        explan.get(TextShape).shadowColor = Color3.Gray();
+        explan.get(TextShape).shadowOffsetY = 1;
+        explan.get(TextShape).shadowOffsetX = -1;
         explan.set(new Transform());
-        explan.get(Transform).position.set(0, 1, -1);
+        explan.get(Transform).position.set(0, 3, -1);
         explan.get(Transform).scale.set(8, 8, 1);
         engine.addEntity(explan);
         var buttonMaterial = new Material();
@@ -463,6 +465,8 @@ define("game", ["require", "exports"], function (require, exports) {
         button.set(new OnClick(function (e) {
             engine.removeEntity(button);
             engine.removeEntity(explan);
+            board.get(BoardData).tutorialDone = true;
+            clearGems();
             addRandomGem();
         }));
         engine.addEntity(button);
@@ -470,6 +474,24 @@ define("game", ["require", "exports"], function (require, exports) {
         buttonText.setParent(button);
         buttonText.set(new TextShape("Let's start!"));
         engine.addEntity(buttonText);
+        spawner.spawnGem(2, 1, 2);
+        spawner.spawnGem(2, 3, 2);
+    }
+    function clearGems() {
+        var e_4, _a;
+        try {
+            for (var _b = __values(gems.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var gem = _c.value;
+                engine.removeEntity(gem);
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
     }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF

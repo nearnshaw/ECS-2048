@@ -35,7 +35,6 @@ define("game", ["require", "exports"], function (require, exports) {
         Directions["RIGHT"] = "right";
         Directions["DOWN"] = "down";
     })(Directions = exports.Directions || (exports.Directions = {}));
-    var TileId = 0;
     // CUSTOM COMPONENTS
     var OpenLerp = /** @class */ (function () {
         function OpenLerp() {
@@ -65,8 +64,7 @@ define("game", ["require", "exports"], function (require, exports) {
     }());
     exports.SwipeDetection = SwipeDetection;
     var TileData = /** @class */ (function () {
-        function TileData(id, val, x, y) {
-            this.id = id;
+        function TileData(val, x, y) {
             this.val = val;
             this.pos = new Vector2(x, y);
             this.nextPos = new Vector2(x, y);
@@ -76,8 +74,7 @@ define("game", ["require", "exports"], function (require, exports) {
             this.willDie = false;
             this.willUpgrade = false;
         }
-        TileData.prototype.reset = function (id, val, x, y) {
-            this.id = id;
+        TileData.prototype.reset = function (val, x, y) {
             this.val = val;
             this.pos = new Vector2(x, y);
             this.nextPos = new Vector2(x, y);
@@ -89,7 +86,7 @@ define("game", ["require", "exports"], function (require, exports) {
         };
         TileData = __decorate([
             Component('tileData'),
-            __metadata("design:paramtypes", [Number, Number, Number, Number])
+            __metadata("design:paramtypes", [Number, Number, Number])
         ], TileData);
         return TileData;
     }());
@@ -267,7 +264,7 @@ define("game", ["require", "exports"], function (require, exports) {
             }
             return null;
         },
-        spawnGem: function (id, val, x, y) {
+        spawnGem: function (val, x, y) {
             var ent = spawner.getEntityFromPool();
             if (!ent)
                 return;
@@ -277,7 +274,7 @@ define("game", ["require", "exports"], function (require, exports) {
             t.scale.setAll(0.5);
             t.position = gridToScene(x, y);
             var td = ent.getOrCreate(TileData);
-            td.reset(id, val, x, y);
+            td.reset(val, x, y);
             engine.addEntity(ent);
         }
     };
@@ -317,9 +314,8 @@ define("game", ["require", "exports"], function (require, exports) {
             var newValue = Math.random() < boardData.fourProbability ? 4 : 2;
             var cellY = Math.floor(cell / 4);
             var cellX = cell % 4;
-            var id = TileId++;
             log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY);
-            spawner.spawnGem(id, newValue, cellX, cellY);
+            spawner.spawnGem(newValue, cellX, cellY);
         }
     }
     function shiftBlocks(direction) {

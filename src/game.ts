@@ -13,8 +13,6 @@ export enum Directions {
   DOWN = 'down'
 }
 
-let TileId: number = 0
-
 // CUSTOM COMPONENTS
 
 @Component('openLerp')
@@ -38,7 +36,6 @@ export class SwipeDetection {
 
 @Component('tileData')
 export class TileData {
-  id: number
   val: number
   pos: Vector2 //maybe not needed
   nextPos: Vector2
@@ -47,8 +44,7 @@ export class TileData {
   sizeLerp: number
   willDie: boolean
   willUpgrade: boolean
-  constructor(id?: number, val?: number, x?: number, y?: number) {
-    this.id = id
+  constructor(val?: number, x?: number, y?: number) {
     this.val = val
     this.pos = new Vector2(x, y)
     this.nextPos = new Vector2(x, y)
@@ -58,8 +54,7 @@ export class TileData {
     this.willDie = false
     this.willUpgrade = false
   }
-  reset(id: number, val: number, x: number, y: number) {
-    this.id = id
+  reset(val: number, x: number, y: number) {
     this.val = val
     this.pos = new Vector2(x, y)
     this.nextPos = new Vector2(x, y)
@@ -227,7 +222,7 @@ const spawner = {
     return null
   },
 
-  spawnGem(id: number, val: number, x: number, y: number) {
+  spawnGem(val: number, x: number, y: number) {
     const ent = spawner.getEntityFromPool()
 
     if (!ent) return
@@ -240,7 +235,7 @@ const spawner = {
     t.position = gridToScene(x, y)
 
     let td = ent.getOrCreate(TileData)
-    td.reset(id, val, x, y)
+    td.reset(val, x, y)
 
     engine.addEntity(ent)
   }
@@ -284,9 +279,8 @@ function addRandomGem() {
     var newValue = Math.random() < boardData.fourProbability ? 4 : 2
     var cellY = Math.floor(cell / 4)
     var cellX = cell % 4
-    var id = TileId++
     log('new cell added, pos: ' + cell + '  ' + cellX + ' & ' + cellY)
-    spawner.spawnGem(id, newValue, cellX, cellY)
+    spawner.spawnGem(newValue, cellX, cellY)
   }
 }
 

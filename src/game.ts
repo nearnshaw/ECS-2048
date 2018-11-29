@@ -25,6 +25,7 @@ export class OpenLerp {
   openScale: number = 0.45
   fraction: number = 0
   open: boolean = false
+  tutorialDone: boolean = false
 }
 
 @Component('swipeDetection')
@@ -183,11 +184,18 @@ function openChest() {
   state.open = !state.open
   switch (state.open) {
     case true:
-      //board = new Board()
       chestOpen.play()
       chestLightOpen.play()
       // play sounds
-      addRandomGem()
+      if (state.tutorialDone){
+        // reset board
+        addRandomGem()
+      }
+      else{
+        state.tutorialDone = true
+        doTutorial()
+      }
+      
       break
     case false:
       chestClose.play()
@@ -414,6 +422,43 @@ function hasLost(){
     if (canMove == false){
       loose()
     }
+
+}
+
+
+
+function doTutorial(){
+  let explan = new Entity()
+  explan.setParent(boardWrapper)
+  explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. Merge tiles until you reach the highest value!"))
+  explan.get(TextShape).fontSize = 20
+  explan.set(new Transform())
+  explan.get(Transform).position.set(0, 1, -1)
+  explan.get(Transform).scale.set(8, 8, 1)
+  engine.addEntity(explan)
+
+  let buttonMaterial = new Material()
+  buttonMaterial.albedoColor = Color3.Blue()
+
+  let button = new Entity()
+  button.set(new PlaneShape())
+  button.set(buttonMaterial)
+  button.setParent(boardWrapper)
+  button.set(new Transform())
+  button.get(Transform).position.set(0, -2.5, -0.5)
+  button.set(new OnClick(e => {
+    engine.removeEntity(button)
+    engine.removeEntity(explan)
+    addRandomGem()
+  }))
+
+  engine.addEntity(button)
+
+  let buttonText = new Entity()
+  buttonText.setParent(button)
+  buttonText.set(new TextShape("Let's start!"))
+  engine.addEntity(buttonText)
+
 
 }
 

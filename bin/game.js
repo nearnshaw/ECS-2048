@@ -45,6 +45,7 @@ define("game", ["require", "exports"], function (require, exports) {
             this.openScale = 0.45;
             this.fraction = 0;
             this.open = false;
+            this.tutorialDone = false;
         }
         OpenLerp = __decorate([
             Component('openLerp')
@@ -229,11 +230,17 @@ define("game", ["require", "exports"], function (require, exports) {
         state.open = !state.open;
         switch (state.open) {
             case true:
-                //board = new Board()
                 chestOpen.play();
                 chestLightOpen.play();
                 // play sounds
-                addRandomGem();
+                if (state.tutorialDone) {
+                    // reset board
+                    addRandomGem();
+                }
+                else {
+                    state.tutorialDone = true;
+                    doTutorial();
+                }
                 break;
             case false:
                 chestClose.play();
@@ -439,6 +446,34 @@ define("game", ["require", "exports"], function (require, exports) {
         if (canMove == false) {
             loose();
         }
+    }
+    function doTutorial() {
+        var explan = new Entity();
+        explan.setParent(boardWrapper);
+        explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. Merge tiles until you reach the highest value!"));
+        explan.get(TextShape).fontSize = 20;
+        explan.set(new Transform());
+        explan.get(Transform).position.set(0, 1, -1);
+        explan.get(Transform).scale.set(8, 8, 1);
+        engine.addEntity(explan);
+        var buttonMaterial = new Material();
+        buttonMaterial.albedoColor = Color3.Blue();
+        var button = new Entity();
+        button.set(new PlaneShape());
+        button.set(buttonMaterial);
+        button.setParent(boardWrapper);
+        button.set(new Transform());
+        button.get(Transform).position.set(0, -2.5, -0.5);
+        button.set(new OnClick(function (e) {
+            engine.removeEntity(button);
+            engine.removeEntity(explan);
+            addRandomGem();
+        }));
+        engine.addEntity(button);
+        var buttonText = new Entity();
+        buttonText.setParent(button);
+        buttonText.set(new TextShape("Let's start!"));
+        engine.addEntity(buttonText);
     }
     ///////////////////////////
     // INITIAL POSITIONS OF STUFF

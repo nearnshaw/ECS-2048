@@ -553,7 +553,7 @@ let gemModels = []
 
 let gemVal = 2
 for (let i = 0; i < values.length; i++) {
-  let gemMod = new GLTFShape('models/' + gemVal + '.gltf')
+  let gemMod = new GLTFShape('models/' + gemVal + '.glb')
   gemModels.push(gemMod)
   gemVal *= 2
 }

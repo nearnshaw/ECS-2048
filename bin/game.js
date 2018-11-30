@@ -562,7 +562,7 @@ define("game", ["require", "exports"], function (require, exports) {
     var gemModels = [];
     var gemVal = 2;
     for (var i = 0; i < values.length; i++) {
-        var gemMod = new GLTFShape('models/' + gemVal + '.gltf');
+        var gemMod = new GLTFShape('models/' + gemVal + '.glb');
         gemModels.push(gemMod);
         gemVal *= 2;
     }

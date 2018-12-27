@@ -421,17 +421,18 @@ function hasLost(){
 
 
 function doTutorial(){
-  let explan = new Entity()
-  explan.setParent(boardWrapper)
-  explan.set(new TextShape("Drag tiles by clicking and dragging anywhere. \nMerge tiles until you reach the highest value!"))
-  explan.get(TextShape).fontSize = 25
-  explan.get(TextShape).shadowColor = Color3.Gray()
-  explan.get(TextShape).shadowOffsetY = 1
-  explan.get(TextShape).shadowOffsetX = -1
-  explan.set(new Transform())
-  explan.get(Transform).position.set(0, 3, -1)
-  explan.get(Transform).scale.set(8, 8, 1)
-  engine.addEntity(explan)
+  let instructions = new Entity()
+  instructions.setParent(boardWrapper)
+  instructions.set(new TextShape("Drag tiles by clicking and dragging anywhere. \nMerge tiles until you reach the highest value!"))
+  instructions.get(TextShape).fontSize = 25
+  instructions.get(TextShape).shadowColor = Color3.Gray()
+  instructions.get(TextShape).shadowOffsetY = 1
+  instructions.get(TextShape).shadowOffsetX = -1
+  instructions.set(new Transform({
+    position: new Vector3(0, 3, -1),
+    scale: new Vector3(8, 8, 1)
+  }))
+  engine.addEntity(instructions)
 
   let buttonMaterial = new Material()
   buttonMaterial.albedoColor = Color3.Blue()
@@ -440,11 +441,12 @@ function doTutorial(){
   button.set(new PlaneShape())
   button.set(buttonMaterial)
   button.setParent(boardWrapper)
-  button.set(new Transform())
-  button.get(Transform).position.set(0, -2.5, -0.5)
+  button.set(new Transform({
+    position: new Vector3(0, -2.5, -0.5)
+  }))
   button.set(new OnClick(e => {
     engine.removeEntity(button)
-    engine.removeEntity(explan)
+    engine.removeEntity(instructions)
     board.get(BoardData).tutorialDone = true
     clearGems()
     addRandomGem()
@@ -478,9 +480,10 @@ board.set(new BoardData())
 // Island
 const island = new Entity()
 island.set(new GLTFShape('models/Island.gltf'))
-island.set(new Transform())
-island.get(Transform).position.set(5, 0, 5)
-island.get(Transform).rotation.setEuler(0, 90, 0)
+island.set(new Transform({
+  position: new Vector3(5, 0, 5),
+  rotation: Quaternion.Euler(0, 90, 0)
+}))
 engine.addEntity(island)
 
 // Banner
@@ -490,17 +493,19 @@ bannerImage.texture = 'textures/Logo2048.png'
 const banner = new Entity()
 banner.set(bannerImage)
 banner.set(new PlaneShape())
-banner.set(new Transform())
-banner.get(Transform).position.set(5, 8, 5)
-banner.get(Transform).scale.setAll(6)
+banner.set(new Transform({
+  position: new Vector3(5, 8, 5),
+  scale: new Vector3(6, 6, 6)
+}))
 engine.addEntity(banner)
 
 // Chest
 const chest = new Entity()
-chest.set(new Transform())
-chest.get(Transform).position.set(5, 0.2, 5)
-chest.get(Transform).rotation.setEuler(0, 90, 0)
-chest.get(Transform).scale.setAll(0.8)
+chest.set(new Transform({
+  position: new Vector3(5, 0.2, 5),
+  rotation: Quaternion.Euler(0, 90, 0),
+  scale: new Vector3(0.8, 0.8, 0.8)
+}))
 chest.set(new GLTFShape('models/Chest.gltf'))
 const chestOpen = new AnimationClip('Open', { loop: false })
 const chestClose = new AnimationClip('Close', { loop: false })
@@ -527,18 +532,20 @@ engine.addEntity(chestLight)
 
 // Board
 const boardWrapper = new Entity()
-boardWrapper.set(new Transform())
-boardWrapper.get(Transform).position.set(5, 0, 5)
-boardWrapper.get(Transform).scale.setAll(0.05)
+boardWrapper.set(new Transform({
+  position: new Vector3(5, 0, 5),
+  scale: new Vector3(0.05, 0.05, 0.05)
+}))
 boardWrapper.set(new OpenLerp())
 engine.addEntity(boardWrapper)
 
 // Map
 const map = new Entity()
 map.setParent(boardWrapper)
-map.set(new Transform())
-map.get(Transform).position.set(0, 1, 0)
-map.get(Transform).scale.setAll(2)
+map.set(new Transform({
+  position: new Vector3(0, 1, 0),
+  scale: new Vector3(2, 2, 2)
+}))
 map.set(new GLTFShape('models/Map.gltf'))
 engine.addEntity(map)
 
